@@ -13,7 +13,7 @@ var restaurant = function() {};
 restaurant.prototype.processRequest = function(req, res){
 	var type = req.method;	
 	var succes = false;
-	var url_path = url.parse(request.url).pathname;
+	var url_path = url.parse(req.url).pathname;
 	var requestParam =  null;
 	
 	/**
