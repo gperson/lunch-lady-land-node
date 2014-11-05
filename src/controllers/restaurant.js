@@ -13,7 +13,7 @@ var restaurant = function() {};
 restaurant.prototype.processRequest = function(req, res){
 	var type = req.method;	
 	var succes = false;
-	var url_path = url.parse(req.url).pathname;
+	var url_parts = url.parse(req.url, true);
 	var requestParam =  null;
 	
 	/**
@@ -23,7 +23,7 @@ restaurant.prototype.processRequest = function(req, res){
 	 * Else updating restaurant
 	 */
 	if(type === 'DELETE'){
-		requestParam =  null; //TODO get request param from url_path
+		requestParam =  null; //TODO get request param from url_parts
 		var exists = false;
 		//exisits = TODO does restaurant exist
 		if(exists){
@@ -40,7 +40,12 @@ restaurant.prototype.processRequest = function(req, res){
 		}	
 		res.end();
 	}else if(type === 'POST'){
-		//success = TODO add retaurant
+		var addMe = null;
+		req.setEncoding('utf8');
+		req.on('data', function (body) {
+			addMe = body;
+		});
+		//success = TODO addRestaurant(addMe);
 		if(succes === false){
 			res.writeHead(400);
 		}
@@ -50,21 +55,21 @@ restaurant.prototype.processRequest = function(req, res){
 		res.end();
 	}
 	else if(type === 'GET'){
-		requestParam = null;  //TODO get request param from url_path
+		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
 		var returnJson = null;
 		
 		//Determine whether getting all or one restaurant .../users/{restaurantId} or .../restaurant?office={office id}
-		if(!(isNaN(requestParam))){
-			//TODO Search restaurant by id
+		if(!(isNaN(parseInt(requestParam)))){
+			//TODO getRestaurantById(requestParam);
 			returnJson = '{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	}';
 		}
 		else{
-			//TODO get what restaurants go with the office
+			var office = url_parts.query.office;
+			//TODO getRestaurantsByOffice(office);
 			returnJson = '{"restaurants": ['+
 				'{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	},'+
 				'{ "id" : 2, "name" : "Burger King", "address" : "567 Sesame Dr", "phone" : "555-555-3456", "office" : 123	}';
 		}
-		
 		if(!(returnJson === null)){
 			res.writeHead(200, {'Content-Type': 'application/json'});
 			res.write(returnJson);
@@ -74,7 +79,7 @@ restaurant.prototype.processRequest = function(req, res){
 		}	
 		res.end();
 	} else{
-		requestParam =  null; //TODO get request param from url_path
+		requestParam =  null; //TODO get request param from url_parts
 		//success = TODO update restaurant
 		if(succes === false){
 			res.writeHead(400);
