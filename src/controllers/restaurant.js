@@ -23,20 +23,13 @@ restaurant.prototype.processRequest = function(req, res){
 	 * Else updating restaurant
 	 */
 	if(type === 'DELETE'){
-		requestParam =  null; //TODO get request param from url_parts
-		var exists = false;
-		//exisits = TODO does restaurant exist
-		if(exists){
-			// success = TODO  deleting a restaurant;
-		} else{
-			success = false;
-		}
-
-		if(succes === false){
-			res.writeHead(400);
+		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 		
+		success = false; // TODO deleteRestuarant(requestParam);
+		if(succes){
+			res.writeHead(200);
 		}
 		else{
-			res.writeHead(200);
+			res.writeHead(400);
 		}	
 		res.end();
 	}else if(type === 'POST'){
@@ -45,19 +38,18 @@ restaurant.prototype.processRequest = function(req, res){
 		req.on('data', function (body) {
 			addMe = body;
 		});
-		//success = TODO addRestaurant(addMe);
-		if(succes === false){
-			res.writeHead(400);
+		//success = TODO addRestaurant(addMe);	
+		if(succes){
+			res.writeHead(200);
 		}
 		else{
-			res.writeHead(200);
+			res.writeHead(400);
 		}
 		res.end();
 	}
 	else if(type === 'GET'){
 		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
-		var returnJson = null;
-		
+		var returnJson = null;	
 		//Determine whether getting all or one restaurant .../users/{restaurantId} or .../restaurant?office={office id}
 		if(!(isNaN(parseInt(requestParam)))){
 			//TODO getRestaurantById(requestParam);
@@ -69,7 +61,7 @@ restaurant.prototype.processRequest = function(req, res){
 			returnJson = '{"restaurants": ['+
 				'{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	},'+
 				'{ "id" : 2, "name" : "Burger King", "address" : "567 Sesame Dr", "phone" : "555-555-3456", "office" : 123	}';
-		}
+		}	
 		if(!(returnJson === null)){
 			res.writeHead(200, {'Content-Type': 'application/json'});
 			res.write(returnJson);
@@ -79,13 +71,13 @@ restaurant.prototype.processRequest = function(req, res){
 		}	
 		res.end();
 	} else{
-		requestParam =  null; //TODO get request param from url_parts
-		//success = TODO update restaurant
-		if(succes === false){
-			res.writeHead(400);
+		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
+		//success = TODO updateRestaurant(requestParam);
+		if(succes){
+			res.writeHead(200);
 		}
 		else{
-			res.writeHead(200);
+			res.writeHead(400);
 		}		
 		res.end();
 	}
