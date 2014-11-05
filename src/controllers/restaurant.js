@@ -12,7 +12,7 @@ var restaurant = function() {};
  */
 restaurant.prototype.processRequest = function(req, res){
 	var type = req.method;	
-	var succes = true;
+	var succes = false;
 	var url_path = url.parse(request.url).pathname;
 	var requestParam =  null;
 	
@@ -24,14 +24,12 @@ restaurant.prototype.processRequest = function(req, res){
 	 */
 	if(type === 'DELETE'){
 		requestParam =  null; //TODO get request param from url_path
-		var exists = true;
-		
-		//TODO logic for deleting a restaurant
-		
-		if(!exists){
-			success = false;
+		var exists = false;
+		//exisits = TODO does restaurant exist
+		if(exists){
+			// success = TODO  deleting a restaurant;
 		} else{
-			//Delete
+			success = false;
 		}
 
 		if(succes === false){
@@ -42,8 +40,7 @@ restaurant.prototype.processRequest = function(req, res){
 		}	
 		res.end();
 	}else if(type === 'POST'){
-		//TODO logic to add 
-
+		//success = TODO add retaurant
 		if(succes === false){
 			res.writeHead(400);
 		}
@@ -78,9 +75,7 @@ restaurant.prototype.processRequest = function(req, res){
 		res.end();
 	} else{
 		requestParam =  null; //TODO get request param from url_path
-		
-		//TODO logic to update 
-		
+		//success = TODO update restaurant
 		if(succes === false){
 			res.writeHead(400);
 		}
@@ -89,7 +84,6 @@ restaurant.prototype.processRequest = function(req, res){
 		}		
 		res.end();
 	}
-	
 	//Return the response object
 	return res;
 };
