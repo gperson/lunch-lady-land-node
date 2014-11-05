@@ -7,43 +7,27 @@ var url = require("url");
 
 var restaurant = function() {};
 
-restaurant.prototype = {
+/**
+ * Decides what action needs to be done, returns response
+ */
+restaurant.prototype.processRequest = function(req, res){
+	var type = req.method;	
+	var succes = true;
+	var url_path = url.parse(request.url).pathname;
+	var requestParam =  null;
+	
 	/**
-	 * Adds or updates a restaurant
+	 * If deleting restaurant
+	 * Else if adding restaurant
+	 * Else if reading restaurant
+	 * Else updating restaurant
 	 */
-	'addOrUpdate' : function (req, res) {
-		var succes = false;
-		var url_path = url.parse(request.url).pathname;
-		var retaurantId =  null; //TODO get request param from url_path
-		
-		//TODO logic for updating a restaurant
-		if(retaurantId === null){
-			//Create new
-		} else{
-			//Update
-		}
-
-		if(succes === false){
-			res.writeHead(400);
-		}
-		else{
-			res.writeHead(200);
-		}
-		
-		res.write(fileData);
-		res.end();
-	},
-
-	/**
-	 * Deletes a restaurant
-	 */
-	'delete' : function (req, res) {
-		var succes = true;
+	if(type === 'DELETE'){
+		requestParam =  null; //TODO get request param from url_path
 		var exists = true;
-		var url_path = url.parse(request.url).pathname;
-		var retaurantId =  null; //TODO get request param from url_path
 		
 		//TODO logic for deleting a restaurant
+		
 		if(!exists){
 			success = false;
 		} else{
@@ -55,39 +39,59 @@ restaurant.prototype = {
 		}
 		else{
 			res.writeHead(200);
-		}
-		
+		}	
 		res.end();
-		return res;
-	},
+	}else if(type === 'POST'){
+		//TODO logic to add 
 
-	/**
-	 * For getting restaurants
-	 */
-	'read' : function (req, res) {
-		var url_path = url.parse(request.url).pathname;
-		var type = req;  //TODO get request param from url_path
-		var returnJson;
+		if(succes === false){
+			res.writeHead(400);
+		}
+		else{
+			res.writeHead(200);
+		}
+		res.end();
+	}
+	else if(type === 'GET'){
+		requestParam = null;  //TODO get request param from url_path
+		var returnJson = null;
 		
 		//Determine whether getting all or one restaurant .../users/{restaurantId} or .../restaurant?office={office id}
-		if(!(isNaN(type))){
-			//If its a number get the restaurant
+		if(!(isNaN(requestParam))){
 			//TODO Search restaurant by id
 			returnJson = '{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	}';
 		}
 		else{
 			//TODO get what restaurants go with the office
-			var office = req.query.office;
 			returnJson = '{"restaurants": ['+
 				'{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	},'+
 				'{ "id" : 2, "name" : "Burger King", "address" : "567 Sesame Dr", "phone" : "555-555-3456", "office" : 123	}';
 		}
 		
-		res.writeHead(200, {'Content-Type': 'application/json'});
-		res.write(returnJson);
+		if(!(returnJson === null)){
+			res.writeHead(200, {'Content-Type': 'application/json'});
+			res.write(returnJson);
+		}
+		else{
+			//TODO what to return when no results
+		}	
 		res.end();
-		return res;
+	} else{
+		requestParam =  null; //TODO get request param from url_path
+		
+		//TODO logic to update 
+		
+		if(succes === false){
+			res.writeHead(400);
+		}
+		else{
+			res.writeHead(200);
+		}		
+		res.end();
 	}
+	
+	//Return the response object
+	return res;
 };
 
 module.exports = new restaurant();
