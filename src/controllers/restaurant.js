@@ -18,12 +18,11 @@ restaurant.prototype.processRequest = function(req, res){
 	
 	/**
 	 * If deleting restaurant
-	 * Else if adding restaurant
 	 * Else if reading restaurant
-	 * Else updating restaurant
+	 * Else get the request body to add or update
 	 */
 	if(type === 'DELETE'){
-		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 		
+		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
 		success = false; // TODO deleteRestuarant(requestParam);
 		if(succes){
 			res.writeHead(200);
@@ -32,22 +31,8 @@ restaurant.prototype.processRequest = function(req, res){
 			res.writeHead(400);
 		}	
 		res.end();
-	}else if(type === 'POST'){
-		var addMe = null;
-		req.setEncoding('utf8');
-		req.on('data', function (body) {
-			addMe = body;
-		});
-		//success = TODO addRestaurant(addMe);	
-		if(succes){
-			res.writeHead(200);
-		}
-		else{
-			res.writeHead(400);
-		}
-		res.end();
-	}
-	else if(type === 'GET'){
+		return res;
+	} else if(type === 'GET'){
 		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
 		var returnJson = null;	
 		//Determine whether getting all or one restaurant .../users/{restaurantId} or .../restaurant?office={office id}
@@ -56,6 +41,7 @@ restaurant.prototype.processRequest = function(req, res){
 			returnJson = '{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	}';
 		}
 		else{
+			//TODO add else is for if parameter is missing
 			var office = url_parts.query.office;
 			//TODO getRestaurantsByOffice(office);
 			returnJson = '{"restaurants": ['+
@@ -70,19 +56,38 @@ restaurant.prototype.processRequest = function(req, res){
 			//TODO what to return when no results
 		}	
 		res.end();
+		return res;
 	} else{
-		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
-		//success = TODO updateRestaurant(requestParam);
-		if(succes){
-			res.writeHead(200);
-		}
-		else{
-			res.writeHead(400);
-		}		
-		res.end();
+		var restaurant ="";
+		req.setEncoding('utf8');
+		req.on('data', function(data){
+			//TODO Check to make sure it isn't a garbage request
+			restaurant += data;
+		});
+		req.on('end', function(){
+			if(type === 'POST'){
+				success = false; // TODO addRestaurant(restaurant);	
+				if(succes){
+					res.writeHead(200);
+				}
+				else{
+					res.writeHead(400);
+				}
+			}
+			else{
+				requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1];
+				success = false; //TODO updateRestaurant(requestParam,restaurant);
+				if(succes){
+					res.writeHead(200);
+				}
+				else{
+					res.writeHead(400);
+				}	
+			}
+			res.end();
+			return res;
+		});
 	}
-	//Return the response object
-	return res;
 };
 
 module.exports = new restaurant();
