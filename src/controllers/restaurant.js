@@ -23,6 +23,7 @@ restaurant.prototype.processRequest = function(req, res){
 	 */
 	if(type === 'DELETE'){
 		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
+		//TODO Verify requestParam is valid
 		success = false; // TODO deleteRestuarant(requestParam);
 		if(succes){
 			res.writeHead(200);
@@ -35,6 +36,7 @@ restaurant.prototype.processRequest = function(req, res){
 	} else if(type === 'GET'){
 		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
 		var returnJson = null;	
+		//TODO Verify requestParam is valid
 		//Determine whether getting all or one restaurant .../users/{restaurantId} or .../restaurant?office={office id}
 		if(!(isNaN(parseInt(requestParam)))){
 			//TODO getRestaurantById(requestParam);
@@ -76,6 +78,7 @@ restaurant.prototype.processRequest = function(req, res){
 			}
 			else{
 				requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1];
+				//TODO Verify requestParam is valid
 				success = false; //TODO updateRestaurant(requestParam,restaurant);
 				if(succes){
 					res.writeHead(200);
