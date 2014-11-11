@@ -5,7 +5,7 @@ var controllers = {
 	user : require('./controllers/user'),
 	office: require('./controllers/office'),
 	order: require('./controllers/order'),
-	resturant : require('./controllers/resturant')
+	restaurant : require('./controllers/restaurant')
 }	
 
 var server = http.createServer(function (request,response){
