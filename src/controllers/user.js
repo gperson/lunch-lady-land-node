@@ -3,7 +3,6 @@ var url = require('url');
 var path = require('path');
 
 function user(){
-  console.log("CONSTRUCTED USER CONTROLLER");
 };
 
 function userObj(id, firstName, lastName, email, phone, office, password) {
@@ -16,9 +15,7 @@ function userObj(id, firstName, lastName, email, phone, office, password) {
   this.password = password;
 };
 
-function createUser(request, response, fn) {
-	console.log("CREATING USER...");
-  
+function createUser(request, response) {
 	var body = '';
 	
 	request.on('data', function (data) {
@@ -33,30 +30,32 @@ function createUser(request, response, fn) {
 		var u = new userObj(id, post['firstName'], post['lastName'], post['email'], post['phone'], post['office'], post['password']);
 		
 		var json = JSON.stringify(u);
-		console.log("CREATED USER: " + json);
-		
 		response.write(json);
-		fn(response);
+		response.end();
 	});
 };
 
-function readUser(request, response, fn) {
-  console.log("READING USER...");
+function readUser(request, response) {
+	var id = path.basename(url.parse(request.url).pathname);
+	var json;
   
-  var id = path.basename(url.parse(request.url).pathname);
+	if(id !== 'user') {
+		// dummy data
+		var u = new userObj(id, 'Spongebob', 'Squarepants', 'bob@xpanxion.com', '555-555-5555', 123, 'squidward');
+		json = JSON.stringify(u);
+	} else {
+		var query = url.parse(request.url, true).query;
+		if(query.office !== undefined) {
+			var u = new userObj(id, 'Spongebob', 'Squarepants', 'bob@xpanxion.com', '555-555-5555', query.office, 'squidward');
+			json = JSON.stringify(u);
+		}
+	}
   
-  // dummy data
-  var u = new userObj(id, 'Spongebob', 'Squarepants', 'bob@xpanxion.com', '555-555-5555', 123, 'squidward');
-  var json = JSON.stringify(u);
-  console.log("READ USER: " + json);
-  
-  response.write(json);
-  fn(response);
+	response.write(json);
+	response.end();
 };
 
-function updateUser(request, response, fn) {
-	console.log("UPDATING USER");
-  
+function updateUser(request, response) {
 	var id = path.basename(url.parse(request.url).pathname);
 	var body = '';
 	
@@ -78,44 +77,29 @@ function updateUser(request, response, fn) {
 		}
 		
 		var json = JSON.stringify(u);
-		console.log("UPDATED USER: " + json);
-		
 		response.write(json);
-		fn(response);
+		response.end();
 	});
 };
 
-function deleteUser(request, response, fn) {
-	console.log("DELETING USER...");
-  
+function deleteUser(request, response) {
 	var id = path.basename(url.parse(request.url).pathname);
-	console.log('DELETED USER: ' + id);
-   
-	fn(response);
+	response.end();
 };
 
-user.prototype.processRequest = function(request, response, fn) {
-
+user.prototype.processRequest = function(request, response) {
 	switch(request.method) {
 		case "POST":
-			createUser(request, response, function() {
-				fn(response);
-			});
+			createUser(request, response);
 			break;
 		case "GET":
-			readUser(request, response, function() {
-				fn(response);
-			});
+			readUser(request, response);
 			break;
 		case "PUT":
-			updateUser(request, response, function() {
-				fn(response);
-			});
+			updateUser(request, response);
 			break;
 		case "DELETE":
-			deleteUser(request, response, function() {
-				fn(response);
-			});
+			deleteUser(request, response);
 		break;
 	}
 };
