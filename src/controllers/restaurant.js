@@ -10,11 +10,11 @@ var restaurant = function() {};
 /**
  * Decides what action needs to be done, returns response
  */
-restaurant.prototype.processRequest = function(req, res){
-	var type = req.method;	
-	var succes = false;
-	var url_parts = url.parse(req.url, true);
-	var requestParam =  null;
+restaurant.prototype.handleRequest = function(req, res){
+	var type = req.method,	
+	succes = false,
+	url_parts = url.parse(req.url, true),
+	requestParam =  null;
 	
 	/**
 	 * If deleting restaurant
@@ -43,12 +43,17 @@ restaurant.prototype.processRequest = function(req, res){
 			returnJson = '{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	}';
 		}
 		else{
-			//TODO add else is for if parameter is missing
 			var office = url_parts.query.office;
-			//TODO getRestaurantsByOffice(office);
-			returnJson = '{"restaurants": ['+
-				'{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	},'+
-				'{ "id" : 2, "name" : "Burger King", "address" : "567 Sesame Dr", "phone" : "555-555-3456", "office" : 123	}';
+			//Determines if the office request param is a valid number and not missing
+			if(!(isNaN(parseInt(office)))){
+				//TODO getRestaurantsByOffice(office);
+				returnJson = '{"restaurants": ['+
+					'{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	},'+
+					'{ "id" : 2, "name" : "Burger King", "address" : "567 Sesame Dr", "phone" : "555-555-3456", "office" : 123	}]}';
+			}
+			else{
+				returnJson = null;
+			}
 		}	
 		if(!(returnJson === null)){
 			res.writeHead(200, {'Content-Type': 'application/json'});
@@ -56,6 +61,7 @@ restaurant.prototype.processRequest = function(req, res){
 		}
 		else{
 			//TODO what to return when no results
+			res.writeHead(200);
 		}	
 		res.end();
 		return res;
@@ -65,7 +71,10 @@ restaurant.prototype.processRequest = function(req, res){
 		req.on('data', function(data){
 			//TODO Check to make sure it isn't a garbage request
 			restaurant += data;
-		});
+		});	
+		req.on('error', function(e) {
+  			res.writeHead(400);
+		});		
 		req.on('end', function(){
 			if(type === 'POST'){
 				success = false; // TODO addRestaurant(restaurant);	
