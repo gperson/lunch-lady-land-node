@@ -18,23 +18,31 @@ var dumbyMulti = '{ "orders" : [ '+ dumbySingle + ", " + dumbySingle2 +']}';
 module.exports.handleRequest = function(req, res){
 	var type = req.method,
 	url_parts = url.parse(req.url, true),
-	lastRequestPath = null;
-	console.log(type);
+	lastRequestPath = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1];
+	success = false;
 	
 	if(type === 'DELETE'){		
-		//TODO DELETE functionality
-		res.writeHead(400);
+		//Verify the last url part is a number (If not success stays false)
+		if(!(isNaN(parseInt(lastRequestPath)))){
+			success = false; // TODO deleteOrder(lastRequestPath);
+		}
+		if(success){
+			res.writeHead(200);
+		}
+		else{
+			res.writeHead(400);
+		}	
 		res.end();
 		return res;
 	} else if(type === 'GET'){
-		lastRequestPath = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
-		console.log(lastRequestPath);
 		var jsonResponse = null;
 		
+		// If the last part is a #, gets that post.
 		if(!(isNaN(parseInt(lastRequestPath)))){
 			//Get Order /order/{order id}
 			jsonResponse = dumbySingle; //TODO getOrder(lastRequestPath);
 		} else{
+			//Else determines if the last part is 'order', 'toady' or 'open'
 			var office = url_parts.query.office, date = url_parts.query.date, 
 				startTime = url_parts.query.startTime, endTime = url_parts.query.endTime, 
 				restaurant = url_parts.query.restaurant;
@@ -72,7 +80,7 @@ module.exports.handleRequest = function(req, res){
 					jsonResponse = null;
 				}
 			} else{
-				//Not valid
+				//Not valid doesn't match any request URL
 				jsonResponse = null;
 			}
 		}
@@ -85,8 +93,7 @@ module.exports.handleRequest = function(req, res){
 		}
 		res.end();
 		return res;
-	} else{
-		//TODO POST and PUT functionality
+	} else {
 		var order ="";
 		req.setEncoding('utf8');
 		req.on('data', function(data){
@@ -97,7 +104,26 @@ module.exports.handleRequest = function(req, res){
   			res.writeHead(400);
 		});		
 		req.on('end', function(){
-			res.writeHead(400);
+			if(type === 'POST'){
+				success = false; // TODO addOrder(order);	
+				if(success){
+					res.writeHead(200);
+				} else {
+					res.writeHead(400);
+				}
+			} else {
+				//Verifies the lastRequestPath is valid (If not success stays false)
+				if(!(isNaN(parseInt(lastRequestPath)))){
+					success = false;//TODO updateOrder(lastRequestPath,order);
+				}
+				
+				if(success){
+					res.writeHead(200);
+				}
+				else{
+					res.writeHead(400);
+				}	
+			}
 			res.end();
 			return res;
 		});

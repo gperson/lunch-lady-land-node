@@ -12,9 +12,9 @@ var restaurant = function() {};
  */
 restaurant.prototype.handleRequest = function(req, res){
 	var type = req.method,	
-	succes = false,
+	success = false,
 	url_parts = url.parse(req.url, true),
-	requestParam =  null;
+	lastRequestPath =  url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1];
 	
 	/**
 	 * If deleting restaurant
@@ -22,10 +22,11 @@ restaurant.prototype.handleRequest = function(req, res){
 	 * Else get the request body to add or update
 	 */
 	if(type === 'DELETE'){
-		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
-		//TODO Verify requestParam is valid
-		success = false; // TODO deleteRestuarant(requestParam);
-		if(succes){
+		//Verify the last url part is a number (If not success stays false)
+		if(!(isNaN(parseInt(lastRequestPath)))){
+			success = false; // TODO deleteRestuarant(lastRequestPath);
+		}
+		if(success){
 			res.writeHead(200);
 		}
 		else{
@@ -34,16 +35,16 @@ restaurant.prototype.handleRequest = function(req, res){
 		res.end();
 		return res;
 	} else if(type === 'GET'){
-		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
-		var returnJson = null;	
-		//TODO Verify requestParam is valid
+		var returnJson = null;
+		
 		//Determine whether getting all or one restaurant .../users/{restaurantId} or .../restaurant?office={office id}
-		if(!(isNaN(parseInt(requestParam)))){
-			//TODO getRestaurantById(requestParam);
+		if(!(isNaN(parseInt(lastRequestPath)))){
+			//TODO getRestaurantById(lastRequestPath);
 			returnJson = '{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	}';
 		}
 		else{
 			var office = url_parts.query.office;
+			
 			//Determines if the office request param is a valid number and not missing
 			if(!(isNaN(parseInt(office)))){
 				//TODO getRestaurantsByOffice(office);
@@ -78,7 +79,7 @@ restaurant.prototype.handleRequest = function(req, res){
 		req.on('end', function(){
 			if(type === 'POST'){
 				success = false; // TODO addRestaurant(restaurant);	
-				if(succes){
+				if(success){
 					res.writeHead(200);
 				}
 				else{
@@ -86,10 +87,12 @@ restaurant.prototype.handleRequest = function(req, res){
 				}
 			}
 			else{
-				requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1];
-				//TODO Verify requestParam is valid
-				success = false; //TODO updateRestaurant(requestParam,restaurant);
-				if(succes){
+				//Verify the last url part is a number (If not success stays false)
+				if(!(isNaN(parseInt(lastRequestPath)))){
+					success = false; //TODO updateRestaurant(lastRequestPath,restaurant);
+				}
+				
+				if(success){
 					res.writeHead(200);
 				}
 				else{
