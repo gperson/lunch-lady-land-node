@@ -10,11 +10,11 @@ var restaurant = function() {};
 /**
  * Decides what action needs to be done, returns response
  */
-restaurant.prototype.processRequest = function(req, res){
-	var type = req.method;	
-	var succes = false;
-	var url_parts = url.parse(req.url, true);
-	var requestParam =  null;
+restaurant.prototype.handleRequest = function(req, res){
+	var type = req.method,	
+	success = false,
+	url_parts = url.parse(req.url, true),
+	lastRequestPath =  url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1];
 	
 	/**
 	 * If deleting restaurant
@@ -22,10 +22,11 @@ restaurant.prototype.processRequest = function(req, res){
 	 * Else get the request body to add or update
 	 */
 	if(type === 'DELETE'){
-		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
-		//TODO Verify requestParam is valid
-		success = false; // TODO deleteRestuarant(requestParam);
-		if(succes){
+		//Verify the last url part is a number (If not success stays false)
+		if(!(isNaN(parseInt(lastRequestPath)))){
+			success = false; // TODO deleteRestuarant(lastRequestPath);
+		}
+		if(success){
 			res.writeHead(200);
 		}
 		else{
@@ -34,21 +35,26 @@ restaurant.prototype.processRequest = function(req, res){
 		res.end();
 		return res;
 	} else if(type === 'GET'){
-		requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1]; 
-		var returnJson = null;	
-		//TODO Verify requestParam is valid
+		var returnJson = null;
+		
 		//Determine whether getting all or one restaurant .../users/{restaurantId} or .../restaurant?office={office id}
-		if(!(isNaN(parseInt(requestParam)))){
-			//TODO getRestaurantById(requestParam);
+		if(!(isNaN(parseInt(lastRequestPath)))){
+			//TODO getRestaurantById(lastRequestPath);
 			returnJson = '{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	}';
 		}
 		else{
-			//TODO add else is for if parameter is missing
 			var office = url_parts.query.office;
-			//TODO getRestaurantsByOffice(office);
-			returnJson = '{"restaurants": ['+
-				'{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	},'+
-				'{ "id" : 2, "name" : "Burger King", "address" : "567 Sesame Dr", "phone" : "555-555-3456", "office" : 123	}';
+			
+			//Determines if the office request param is a valid number and not missing
+			if(!(isNaN(parseInt(office)))){
+				//TODO getRestaurantsByOffice(office);
+				returnJson = '{"restaurants": ['+
+					'{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	},'+
+					'{ "id" : 2, "name" : "Burger King", "address" : "567 Sesame Dr", "phone" : "555-555-3456", "office" : 123	}]}';
+			}
+			else{
+				returnJson = null;
+			}
 		}	
 		if(!(returnJson === null)){
 			res.writeHead(200, {'Content-Type': 'application/json'});
@@ -56,6 +62,7 @@ restaurant.prototype.processRequest = function(req, res){
 		}
 		else{
 			//TODO what to return when no results
+			res.writeHead(200);
 		}	
 		res.end();
 		return res;
@@ -65,11 +72,14 @@ restaurant.prototype.processRequest = function(req, res){
 		req.on('data', function(data){
 			//TODO Check to make sure it isn't a garbage request
 			restaurant += data;
-		});
+		});	
+		req.on('error', function(e) {
+  			res.writeHead(400);
+		});		
 		req.on('end', function(){
 			if(type === 'POST'){
 				success = false; // TODO addRestaurant(restaurant);	
-				if(succes){
+				if(success){
 					res.writeHead(200);
 				}
 				else{
@@ -77,10 +87,12 @@ restaurant.prototype.processRequest = function(req, res){
 				}
 			}
 			else{
-				requestParam = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1];
-				//TODO Verify requestParam is valid
-				success = false; //TODO updateRestaurant(requestParam,restaurant);
-				if(succes){
+				//Verify the last url part is a number (If not success stays false)
+				if(!(isNaN(parseInt(lastRequestPath)))){
+					success = false; //TODO updateRestaurant(lastRequestPath,restaurant);
+				}
+				
+				if(success){
 					res.writeHead(200);
 				}
 				else{
