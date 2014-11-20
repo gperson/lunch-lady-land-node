@@ -26,106 +26,145 @@ module.exports.handleRequest = function(req, res){
 		if(!(isNaN(parseInt(lastRequestPath)))){
 			success = false; // TODO deleteOrder(lastRequestPath);
 		}
-		if(success){
-			res.writeHead(200);
-		}
-		else{
-			res.writeHead(400);
-		}	
-		res.end();
-		return res;
+		
+		//Returns the response
+		return sendResponse(res,success,null);
+		
 	} else if(type === 'GET'){
 		var jsonResponse = null;
 		
 		// If the last part is a #, gets that post.
 		if(!(isNaN(parseInt(lastRequestPath)))){
+			
 			//Get Order /order/{order id}
 			jsonResponse = dumbySingle; //TODO getOrder(lastRequestPath);
+			
 		} else{
+			
 			//Else determines if the last part is 'order', 'toady' or 'open'
 			var office = url_parts.query.office, date = url_parts.query.date, 
 				startTime = url_parts.query.startTime, endTime = url_parts.query.endTime, 
 				restaurant = url_parts.query.restaurant;
+			
 			if(lastRequestPath === 'order'){
-				if((typeof office !== "undefined") && (typeof restaurant !== "undefined") && (typeof endTime !== "undefined") && (typeof startTime !== "undefined")){
+				
+				if(isDefined(office) && isDefined(restaurant) && isDefined(endTime) && isDefined(startTime)){
 					//Orders by office and date and between times for a restaurant /order?office={office id}&date={date}&startTime={time}&endTime={time}&restaurant={restaurant id}
-					jsonResponse = dumbyMulti; //TODO getTodaysOrdersByOfficeBetweenTimes(office,date,startTime,endTime);				
-				} else if((typeof date !== "undefined") && (typeof endTime !== "undefined") && (typeof startTime !== "undefined")){
+					jsonResponse = dumbyMulti; //TODO getTodaysOrdersByOfficeBetweenTimes(office,date,startTime,endTime);
+					success = true; //TODO set based on if get% is a success				
+				} else if(isDefined(date) && isDefined(endTime) && isDefined(startTime)){
 					//Orders by office and date and between times /order?office={office id}&date={date}&startTime={time}&endTime={time}
-					jsonResponse = dumbyMulti; //TODO getTodaysOrdersByBetweenTimes(date,startTime,endTime);				
-				} else if((typeof date !== "undefined") && (typeof office !== "undefined")){
+					jsonResponse = dumbyMulti; //TODO getTodaysOrdersByBetweenTimes(date,startTime,endTime);
+					success = true; //TODO set based on if get% is a success				
+				} else if(isDefined(date) && isDefined(office)){
 					//Orders by office and date /order?office={office id}&date={date}
-					jsonResponse = dumbyMulti; //TODO getTodaysOrdersBy(office,date);					
+					jsonResponse = dumbyMulti; //TODO getTodaysOrdersBy(office,date);
+					success = true; //TODO set based on if get% is a success					
 				} else{
 					//Invalid request
 					jsonResponse = null;
+					success = false;
 				}
+				
 			} else if(lastRequestPath === 'today'){
-				if((typeof office !== "undefined") && (typeof restaurant !== "undefined")){
+				
+				if(isDefined(office) && isDefined(restaurant)){
 					//Today's order by office and date and between times for a restaurant /order/today?office={office id}&restaurant={restaurant id}
-					jsonResponse = dumbyMulti; //TODO getOrdersByOfficeAndRestaurant(office,restaurant);	
+					jsonResponse = dumbyMulti; //TODO getOrdersByOfficeAndRestaurant(office,restaurant);
+					success = true; //TODO set based on if get% is a success	
 				} else {
 					//Invalid request
 					jsonResponse = null;
+					success = false;
 				}
+				
 			} else if(lastRequestPath === 'open'){
-				if((typeof office !== "undefined") && (typeof restaurant !== "undefined")){
+				
+				if(isDefined(office) && isDefined(restaurant)){
 					//Today's open orders by office and restaurant /order/today/open?office={office id}&restaurant={restaurant id}
-					jsonResponse = dumbyMulti; //TODO getTodaysOpenOrderByOfficeAndRestaurant(office,restaurant);	
-				} else if(typeof office !== "undefined"){
+					jsonResponse = dumbyMulti; //TODO getTodaysOpenOrderByOfficeAndRestaurant(office,restaurant);
+					success = true; //TODO set based on if get% is a success	
+				} else if(isDefined(office)){
 					//Today's open orders by office /order/today/open?office={office id}
 					jsonResponse = dumbyMulti; //TODO getOrderByOffice(office);
+					success = true; //TODO set based on if get% is a success
 				} else{
 					//Invalid request
 					jsonResponse = null;
+					success = false;
 				}
+				
 			} else{
 				//Not valid doesn't match any request URL
 				jsonResponse = null;
+				success = false;
 			}
 		}
 		
-		if(!(jsonResponse === null)){
-			res.writeHead(200, {'Content-Type': 'application/json'});
-			res.write(jsonResponse);
-		} else {
-			res.writeHead(400);
-		}
-		res.end();
-		return res;
+		//Returns the response
+		return sendResponse(res,success,jsonResponse);
+		
 	} else {
 		var order ="";
+		
+		//Sets the encoding and reads/writes the data to 'order'
 		req.setEncoding('utf8');
 		req.on('data', function(data){
 			//TODO Check to make sure it isn't a garbage request
 			order += data;
-		});	
+		});
+		
+		//If there is an error reading the request	
 		req.on('error', function(e) {
-  			res.writeHead(400);
-		});		
+  			//Returns error response
+			return sendResponse(res,false,null);
+		});
+		
+		//After the request is done being converted, POST or PUT the 'order'		
 		req.on('end', function(){
+			
 			if(type === 'POST'){
 				success = false; // TODO addOrder(order);	
-				if(success){
-					res.writeHead(200);
-				} else {
-					res.writeHead(400);
-				}
 			} else {
 				//Verifies the lastRequestPath is valid (If not success stays false)
 				if(!(isNaN(parseInt(lastRequestPath)))){
 					success = false;//TODO updateOrder(lastRequestPath,order);
 				}
-				
-				if(success){
-					res.writeHead(200);
-				}
-				else{
-					res.writeHead(400);
-				}	
 			}
-			res.end();
-			return res;
+			
+			//Returns the response
+			return sendResponse(res,success,null);
+			
 		});
 	}
+}
+
+/**
+* Determines if a var's is type 'undefined'
+* returns true when it is defined
+*/
+function isDefined(field){
+	return (typeof field !== "undefined");
+}
+
+/**
+* Returns the success or failure response, and JSON value if it's not null
+*/
+function sendResponse(response,isSuccess,json){
+	//Writes the result to the response	
+	if((!(json === null)) && isSuccess){
+		response.writeHead(200, {'Content-Type': 'application/json'});
+		response.write(json);
+	} else if(isSuccess) {
+		response.writeHead(200);
+	} else if(!(json === null)){
+		response.writeHead(400, {'Content-Type': 'application/json'});
+		response.write(json);
+	} else{
+		response.writeHead(400);
+	}
+	
+	//Ends and returns the response		
+	response.end();
+	return response;
 }
