@@ -4,12 +4,14 @@
 var http = require('http');
 var path = require("path");  
 var url = require("url");
+var validator = require('tv4');
 
 /**
  * Decides what action needs to be done, returns response
  */
 module.exports.handleRequest = function(req, res){
-	var type = req.method,	
+	var type = req.method,
+	jsonId = "id", jsonName = "name", jsonAddress = "address", jsonPhone = "phone", jsonOffice = "office",	
 	success = false,
 	url_parts = url.parse(req.url, true),
 	lastRequestPath =  url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1];
@@ -37,8 +39,7 @@ module.exports.handleRequest = function(req, res){
 			//TODO getRestaurantById(lastRequestPath);
 			returnJson = '{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	}';
 			success = true; //TODO set based on if get% is a success
-		}
-		else{
+		} else{
 			var office = url_parts.query.office;
 			
 			//Determines if the office request param is a valid number and not missing
@@ -48,8 +49,7 @@ module.exports.handleRequest = function(req, res){
 					'{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	},'+
 					'{ "id" : 2, "name" : "Burger King", "address" : "567 Sesame Dr", "phone" : "555-555-3456", "office" : 123	}]}';
 				success = true; //TODO set based on if get% is a success
-			}
-			else{
+			} else{
 				returnJson = null;
 			}
 		}
@@ -75,16 +75,41 @@ module.exports.handleRequest = function(req, res){
 		
 		//After the request body is read we POST or PUT the data		
 		req.on('end', function(){
-			if(type === 'POST'){
-				success = false; // TODO addRestaurant(restaurant);	
-				
+			
+			//Parse request body to JSON
+			try {
+				restaurant = JSON.parse(restaurant);
+			} catch(err){
+				//Returns the error response
+				return sendResponse(res,false,buildErrorJSON("Couldn't parse the request body as a JSON"));
 			}
-			else{
-				//Verify the last url part is a number (If not success stays false)
-				if(!(isNaN(parseInt(lastRequestPath)))){
-					success = false; //TODO updateRestaurant(lastRequestPath,restaurant);
-				}
+			
+			//Verify JSON Schema for restaurant
+  			var schema = {
+  				"id": "Restaurant",
+    			"type": "object",
+    			"properties": {
+  					jsonId : {"type": "integer"},
+  					jsonName : {"type": "string"},
+  					jsonAddress : {"type": "string"},
+  					jsonPhone : {"type": "string"},
+  					jsonOffice : {"type": "integer"}
+  				} ,
+  				"required": [jsonName, jsonAddress, jsonPhone, jsonOffice]
+			};
+			success = validator.validate(restaurant, schema);
+			
+			//If it is a valid JSON request
+			if(success){
+				if(type === 'POST'){
+					success = false; // TODO addRestaurant(restaurant);	
 				
+				} else{
+					//Verify the last url part is a number (If not success stays false)
+					if(!(isNaN(parseInt(lastRequestPath)))){
+						success = false; //TODO updateRestaurant(lastRequestPath,restaurant);
+					}				
+				}
 			}
 			
 			//Returns the response
@@ -109,9 +134,17 @@ function sendResponse(response,isSuccess,json){
 		response.write(json);
 	} else{
 		response.writeHead(400);
+		response.write('{ "error" : "Could not complete the request successfully." }');
 	}
 	
 	//Ends and returns the response		
 	response.end();
 	return response;
+}
+
+/**
+* Builds JSON error message
+*/
+function buildErrorJSON(message){
+	return '{ "error" : "' + message + '" }'; 
 }

@@ -4,6 +4,7 @@
 var http = require('http');
 var path = require("path");  
 var url = require("url");
+var validator = require('tv4');
 
 var dumbySingle = '{  "id" :123455,  "user" :1234,  "restaurantId" : 1, '+ 
 	'"itemsToOrder" : "Two Krabby Patties, A Large kelp Fry and a Krabby Soda", '+
@@ -17,10 +18,17 @@ var dumbyMulti = '{ "orders" : [ '+ dumbySingle + ", " + dumbySingle2 +']}';
 
 module.exports.handleRequest = function(req, res){
 	var type = req.method,
+	jsonId  = "id", jsonUser = "user", jsonRestaurantId = "restaurantId", jsonItemsToOrder = "itemsToOrder", 
+	jsonEstimatedCost = "estimatedCost", jsonDesiredTime = "desiredTime", jsonIsOrderOpen = "isOrderOpen",  jsonDate = "date",
 	url_parts = url.parse(req.url, true),
 	lastRequestPath = url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1];
 	success = false;
 	
+	/**
+	 * If deleting order
+	 * Else if reading order
+	 * Else get the request body to add or update
+	 */
 	if(type === 'DELETE'){		
 		//Verify the last url part is a number (If not success stays false)
 		if(!(isNaN(parseInt(lastRequestPath)))){
@@ -38,6 +46,7 @@ module.exports.handleRequest = function(req, res){
 			
 			//Get Order /order/{order id}
 			jsonResponse = dumbySingle; //TODO getOrder(lastRequestPath);
+			success = true;
 			
 		} else{
 			
@@ -48,55 +57,55 @@ module.exports.handleRequest = function(req, res){
 			
 			if(lastRequestPath === 'order'){
 				
-				if(isDefined(office) && isDefined(restaurant) && isDefined(endTime) && isDefined(startTime)){
+				if(isDefined(office) && isDefined(restaurant) && isDefined(endTime) && isDefined(startTime) && isDefined(date)){
 					//Orders by office and date and between times for a restaurant /order?office={office id}&date={date}&startTime={time}&endTime={time}&restaurant={restaurant id}
 					jsonResponse = dumbyMulti; //TODO getTodaysOrdersByOfficeBetweenTimes(office,date,startTime,endTime);
 					success = true; //TODO set based on if get% is a success				
-				} else if(isDefined(date) && isDefined(endTime) && isDefined(startTime)){
+				} else if(isDefined(office) && !isDefined(restaurant) && isDefined(endTime) && isDefined(startTime) && isDefined(date)){
 					//Orders by office and date and between times /order?office={office id}&date={date}&startTime={time}&endTime={time}
 					jsonResponse = dumbyMulti; //TODO getTodaysOrdersByBetweenTimes(date,startTime,endTime);
 					success = true; //TODO set based on if get% is a success				
-				} else if(isDefined(date) && isDefined(office)){
+				} else if(isDefined(office) && !isDefined(restaurant) && !isDefined(endTime) && !isDefined(startTime) && isDefined(date)){
 					//Orders by office and date /order?office={office id}&date={date}
 					jsonResponse = dumbyMulti; //TODO getTodaysOrdersBy(office,date);
 					success = true; //TODO set based on if get% is a success					
 				} else{
 					//Invalid request
-					jsonResponse = null;
+					jsonResponse = buildErrorJSON("The requested URL is not found.");
 					success = false;
 				}
 				
 			} else if(lastRequestPath === 'today'){
 				
-				if(isDefined(office) && isDefined(restaurant)){
+				if(isDefined(office) && isDefined(restaurant) && !isDefined(endTime) && !isDefined(startTime) && !isDefined(date)){
 					//Today's order by office and date and between times for a restaurant /order/today?office={office id}&restaurant={restaurant id}
 					jsonResponse = dumbyMulti; //TODO getOrdersByOfficeAndRestaurant(office,restaurant);
 					success = true; //TODO set based on if get% is a success	
 				} else {
 					//Invalid request
-					jsonResponse = null;
+					jsonResponse = buildErrorJSON("The requested URL is not found.");
 					success = false;
 				}
 				
 			} else if(lastRequestPath === 'open'){
 				
-				if(isDefined(office) && isDefined(restaurant)){
+				if(isDefined(office) && isDefined(restaurant) && !isDefined(endTime) && !isDefined(startTime) && !isDefined(date)){
 					//Today's open orders by office and restaurant /order/today/open?office={office id}&restaurant={restaurant id}
 					jsonResponse = dumbyMulti; //TODO getTodaysOpenOrderByOfficeAndRestaurant(office,restaurant);
 					success = true; //TODO set based on if get% is a success	
-				} else if(isDefined(office)){
+				} else if(isDefined(office) && !isDefined(restaurant) && !isDefined(endTime) && !isDefined(startTime) && !isDefined(date)){
 					//Today's open orders by office /order/today/open?office={office id}
 					jsonResponse = dumbyMulti; //TODO getOrderByOffice(office);
 					success = true; //TODO set based on if get% is a success
 				} else{
 					//Invalid request
-					jsonResponse = null;
+					jsonResponse = buildErrorJSON("The requested URL is not found.");
 					success = false;
 				}
 				
 			} else{
 				//Not valid doesn't match any request URL
-				jsonResponse = null;
+				jsonResponse = buildErrorJSON("The requested URL is not found.");
 				success = false;
 			}
 		}
@@ -117,18 +126,59 @@ module.exports.handleRequest = function(req, res){
 		//If there is an error reading the request	
 		req.on('error', function(e) {
   			//Returns error response
-			return sendResponse(res,false,null);
+			return sendResponse(res,false,buildErrorJSON("Could't read the request."));
 		});
 		
 		//After the request is done being converted, POST or PUT the 'order'		
 		req.on('end', function(){
+
+			//Parse request body to JSON
+			try {
+				order = JSON.parse(order);
+			} catch(err){
+				//Returns a error response
+				return sendResponse(res,false,buildErrorJSON("Couldn't parse the request body as a JSON."));
+			}
 			
-			if(type === 'POST'){
-				success = false; // TODO addOrder(order);	
-			} else {
-				//Verifies the lastRequestPath is valid (If not success stays false)
-				if(!(isNaN(parseInt(lastRequestPath)))){
-					success = false;//TODO updateOrder(lastRequestPath,order);
+			/* TODO Once we see the format of dates from UI JSON
+			//Verifies date format
+			validator.addFormat('date-time', function (data) {
+    			return isValidDate(data);
+			});*/
+			
+			//Verify JSON Schema for restaurant
+  			var schema = {
+  				"id": "Order",
+    			"type": "object",
+    			"properties": {
+  					jsonId : {"type": "integer"},
+  					jsonUser : {"type": "integer"},
+  					jsonRestaurantId : {"type": "integer"},
+  					jsonItemsToOrder : {"type": "string"},
+  					jsonEstimatedCost : {"type": "number"},
+  					jsonDesired : {
+            			"format": "date-time",
+            			"type": "string"
+  					},
+  					jsonIsOrderOpen : {"type": "boolean"},
+  					jsonDate : {
+            			"format": "date-time",
+            			"type": "string"
+  					},
+  				},
+  				"required": [ jsonUser, jsonRestaurantId, jsonItemsToOrder, jsonEstimatedCost, jsonDesiredTime, jsonIsOrderOpen, jsonDate ]
+			};
+			success = validator.validate(order, schema);
+			
+			//If it is a valid JSON request
+			if(success){
+				if(type === 'POST'){
+					success = false; // TODO addOrder(order);	
+				} else {
+					//Verifies the lastRequestPath is valid (If not success stays false)
+					if(!(isNaN(parseInt(lastRequestPath)))){
+						success = false;//TODO updateOrder(lastRequestPath,order);
+					}
 				}
 			}
 			
@@ -162,9 +212,17 @@ function sendResponse(response,isSuccess,json){
 		response.write(json);
 	} else{
 		response.writeHead(400);
+		response.write('{ "error" : "Could not complete the request successfully." }');
 	}
 	
 	//Ends and returns the response		
 	response.end();
 	return response;
+}
+
+/**
+* Builds JSON error message
+*/
+function buildErrorJSON(message){
+	return '{ "error" : "' + message + '" }'; 
 }
