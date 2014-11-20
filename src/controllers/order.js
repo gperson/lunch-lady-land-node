@@ -4,7 +4,8 @@
 var http = require('http');
 var path = require("path");  
 var url = require("url");
-var validator = require('tv4');
+var validator = require("tv4"); //npm install tv4-node
+var common = require("./controllerFunctions");
 
 var dumbySingle = '{  "id" :123455,  "user" :1234,  "restaurantId" : 1, '+ 
 	'"itemsToOrder" : "Two Krabby Patties, A Large kelp Fry and a Krabby Soda", '+
@@ -30,17 +31,18 @@ module.exports.handleRequest = function(req, res){
 	 * Else get the request body to add or update
 	 */
 	if(type === 'DELETE'){		
+		
 		//Verify the last url part is a number (If not success stays false)
 		if(!(isNaN(parseInt(lastRequestPath)))){
 			success = false; // TODO deleteOrder(lastRequestPath);
 		}
 		
 		//Returns the response
-		return sendResponse(res,success,null);
+		return common.sendResponse(res,success,null);
 		
 	} else if(type === 'GET'){
 		var jsonResponse = null;
-		
+
 		// If the last part is a #, gets that post.
 		if(!(isNaN(parseInt(lastRequestPath)))){
 			
@@ -57,61 +59,61 @@ module.exports.handleRequest = function(req, res){
 			
 			if(lastRequestPath === 'order'){
 				
-				if(isDefined(office) && isDefined(restaurant) && isDefined(endTime) && isDefined(startTime) && isDefined(date)){
+				if(common.isDefined(office) && common.isDefined(restaurant) && common.isDefined(endTime) && common.isDefined(startTime) && common.isDefined(date)){
 					//Orders by office and date and between times for a restaurant /order?office={office id}&date={date}&startTime={time}&endTime={time}&restaurant={restaurant id}
 					jsonResponse = dumbyMulti; //TODO getTodaysOrdersByOfficeBetweenTimes(office,date,startTime,endTime);
 					success = true; //TODO set based on if get% is a success				
-				} else if(isDefined(office) && !isDefined(restaurant) && isDefined(endTime) && isDefined(startTime) && isDefined(date)){
+				} else if(common.isDefined(office) && !common.isDefined(restaurant) && common.isDefined(endTime) && common.isDefined(startTime) && common.isDefined(date)){
 					//Orders by office and date and between times /order?office={office id}&date={date}&startTime={time}&endTime={time}
 					jsonResponse = dumbyMulti; //TODO getTodaysOrdersByBetweenTimes(date,startTime,endTime);
 					success = true; //TODO set based on if get% is a success				
-				} else if(isDefined(office) && !isDefined(restaurant) && !isDefined(endTime) && !isDefined(startTime) && isDefined(date)){
+				} else if(common.isDefined(office) && !common.isDefined(restaurant) && !common.isDefined(endTime) && !common.isDefined(startTime) && common.isDefined(date)){
 					//Orders by office and date /order?office={office id}&date={date}
 					jsonResponse = dumbyMulti; //TODO getTodaysOrdersBy(office,date);
 					success = true; //TODO set based on if get% is a success					
 				} else{
 					//Invalid request
-					jsonResponse = buildErrorJSON("The requested URL is not found.");
+					jsonResponse = common.buildErrorJSON("The requested URL is not found.");
 					success = false;
 				}
 				
 			} else if(lastRequestPath === 'today'){
 				
-				if(isDefined(office) && isDefined(restaurant) && !isDefined(endTime) && !isDefined(startTime) && !isDefined(date)){
+				if(common.isDefined(office) && common.isDefined(restaurant) && !common.isDefined(endTime) && !common.isDefined(startTime) && !common.isDefined(date)){
 					//Today's order by office and date and between times for a restaurant /order/today?office={office id}&restaurant={restaurant id}
 					jsonResponse = dumbyMulti; //TODO getOrdersByOfficeAndRestaurant(office,restaurant);
 					success = true; //TODO set based on if get% is a success	
 				} else {
 					//Invalid request
-					jsonResponse = buildErrorJSON("The requested URL is not found.");
+					jsonResponse = common.buildErrorJSON("The requested URL is not found.");
 					success = false;
 				}
 				
 			} else if(lastRequestPath === 'open'){
 				
-				if(isDefined(office) && isDefined(restaurant) && !isDefined(endTime) && !isDefined(startTime) && !isDefined(date)){
+				if(common.isDefined(office) && common.isDefined(restaurant) && !common.isDefined(endTime) && !common.isDefined(startTime) && !common.isDefined(date)){
 					//Today's open orders by office and restaurant /order/today/open?office={office id}&restaurant={restaurant id}
 					jsonResponse = dumbyMulti; //TODO getTodaysOpenOrderByOfficeAndRestaurant(office,restaurant);
 					success = true; //TODO set based on if get% is a success	
-				} else if(isDefined(office) && !isDefined(restaurant) && !isDefined(endTime) && !isDefined(startTime) && !isDefined(date)){
+				} else if(common.isDefined(office) && !common.isDefined(restaurant) && !common.isDefined(endTime) && !common.isDefined(startTime) && !common.isDefined(date)){
 					//Today's open orders by office /order/today/open?office={office id}
 					jsonResponse = dumbyMulti; //TODO getOrderByOffice(office);
 					success = true; //TODO set based on if get% is a success
 				} else{
 					//Invalid request
-					jsonResponse = buildErrorJSON("The requested URL is not found.");
+					jsonResponse = common.buildErrorJSON("The requested URL is not found.");
 					success = false;
 				}
 				
 			} else{
 				//Not valid doesn't match any request URL
-				jsonResponse = buildErrorJSON("The requested URL is not found.");
+				jsonResponse = common.buildErrorJSON("The requested URL is not found.");
 				success = false;
 			}
 		}
 		
 		//Returns the response
-		return sendResponse(res,success,jsonResponse);
+		return common.sendResponse(res,success,jsonResponse);
 		
 	} else {
 		var order ="";
@@ -126,7 +128,7 @@ module.exports.handleRequest = function(req, res){
 		//If there is an error reading the request	
 		req.on('error', function(e) {
   			//Returns error response
-			return sendResponse(res,false,buildErrorJSON("Could't read the request."));
+			return common.sendResponse(res,false,common.buildErrorJSON("Could't read the request."));
 		});
 		
 		//After the request is done being converted, POST or PUT the 'order'		
@@ -137,7 +139,7 @@ module.exports.handleRequest = function(req, res){
 				order = JSON.parse(order);
 			} catch(err){
 				//Returns a error response
-				return sendResponse(res,false,buildErrorJSON("Couldn't parse the request body as a JSON."));
+				return common.sendResponse(res,false,common.buildErrorJSON("Couldn't parse the request body as a JSON."));
 			}
 			
 			/* TODO Once we see the format of dates from UI JSON
@@ -183,46 +185,8 @@ module.exports.handleRequest = function(req, res){
 			}
 			
 			//Returns the response
-			return sendResponse(res,success,null);
+			return common.sendResponse(res,success,null);
 			
 		});
 	}
-}
-
-/**
-* Determines if a var's is type 'undefined'
-* returns true when it is defined
-*/
-function isDefined(field){
-	return (typeof field !== "undefined");
-}
-
-/**
-* Returns the success or failure response, and JSON value if it's not null
-*/
-function sendResponse(response,isSuccess,json){
-	//Writes the result to the response	
-	if((!(json === null)) && isSuccess){
-		response.writeHead(200, {'Content-Type': 'application/json'});
-		response.write(json);
-	} else if(isSuccess) {
-		response.writeHead(200);
-	} else if(!(json === null)){
-		response.writeHead(400, {'Content-Type': 'application/json'});
-		response.write(json);
-	} else{
-		response.writeHead(400);
-		response.write('{ "error" : "Could not complete the request successfully." }');
-	}
-	
-	//Ends and returns the response		
-	response.end();
-	return response;
-}
-
-/**
-* Builds JSON error message
-*/
-function buildErrorJSON(message){
-	return '{ "error" : "' + message + '" }'; 
 }

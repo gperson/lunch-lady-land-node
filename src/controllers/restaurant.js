@@ -4,7 +4,8 @@
 var http = require('http');
 var path = require("path");  
 var url = require("url");
-var validator = require('tv4');
+var validator = require("tv4");//npm install tv4-node
+var common = require("./controllerFunctions");
 
 /**
  * Decides what action needs to be done, returns response
@@ -29,7 +30,7 @@ module.exports.handleRequest = function(req, res){
 		}
 		
 		//Returns the response
-		return sendResponse(res,success,null);
+		return common.sendResponse(res,success,null);
 		
 	} else if(type === 'GET'){
 		var returnJson = null;
@@ -55,7 +56,7 @@ module.exports.handleRequest = function(req, res){
 		}
 		
 		//Returns the response
-		return sendResponse(res,success,returnJson);
+		return common.sendResponse(res,success,returnJson);
 		
 	} else{
 		var restaurant ="";
@@ -70,7 +71,7 @@ module.exports.handleRequest = function(req, res){
 		//If error reading the request	
 		req.on('error', function(e) {
   			//Returns error response
-			return sendResponse(res,false,null);
+			return common.sendResponse(res,false,null);
 		});
 		
 		//After the request body is read we POST or PUT the data		
@@ -81,7 +82,7 @@ module.exports.handleRequest = function(req, res){
 				restaurant = JSON.parse(restaurant);
 			} catch(err){
 				//Returns the error response
-				return sendResponse(res,false,buildErrorJSON("Couldn't parse the request body as a JSON"));
+				return common.sendResponse(res,false,common.buildErrorJSON("Couldn't parse the request body as a JSON"));
 			}
 			
 			//Verify JSON Schema for restaurant
@@ -113,38 +114,8 @@ module.exports.handleRequest = function(req, res){
 			}
 			
 			//Returns the response
-			return sendResponse(res,success,null);
+			return common.sendResponse(res,success,null);
 			
 		});
 	}
-};
-
-/**
-* Returns the success or failure response, and JSON value if it's not null
-*/
-function sendResponse(response,isSuccess,json){
-	//Writes the result to the response	
-	if((!(json === null)) && isSuccess){
-		response.writeHead(200, {'Content-Type': 'application/json'});
-		response.write(json);
-	} else if(isSuccess) {
-		response.writeHead(200);
-	} else if(!(json === null)){
-		response.writeHead(400, {'Content-Type': 'application/json'});
-		response.write(json);
-	} else{
-		response.writeHead(400);
-		response.write('{ "error" : "Could not complete the request successfully." }');
-	}
-	
-	//Ends and returns the response		
-	response.end();
-	return response;
-}
-
-/**
-* Builds JSON error message
-*/
-function buildErrorJSON(message){
-	return '{ "error" : "' + message + '" }'; 
 }
