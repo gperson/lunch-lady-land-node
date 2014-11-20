@@ -4,14 +4,15 @@
 var http = require('http');
 var path = require("path");  
 var url = require("url");
-
-var restaurant = function() {};
+var validator = require("tv4");//npm install tv4-node
+var common = require("./controllerFunctions");
 
 /**
  * Decides what action needs to be done, returns response
  */
-restaurant.prototype.handleRequest = function(req, res){
-	var type = req.method,	
+module.exports.handleRequest = function(req, res){
+	var type = req.method,
+	jsonId = "id", jsonName = "name", jsonAddress = "address", jsonPhone = "phone", jsonOffice = "office",	
 	success = false,
 	url_parts = url.parse(req.url, true),
 	lastRequestPath =  url_parts.pathname.split('/')[url_parts.pathname.split('/').length - 1];
@@ -22,18 +23,15 @@ restaurant.prototype.handleRequest = function(req, res){
 	 * Else get the request body to add or update
 	 */
 	if(type === 'DELETE'){
+		
 		//Verify the last url part is a number (If not success stays false)
 		if(!(isNaN(parseInt(lastRequestPath)))){
 			success = false; // TODO deleteRestuarant(lastRequestPath);
 		}
-		if(success){
-			res.writeHead(200);
-		}
-		else{
-			res.writeHead(400);
-		}	
-		res.end();
-		return res;
+		
+		//Returns the response
+		return common.sendResponse(res,success,null);
+		
 	} else if(type === 'GET'){
 		var returnJson = null;
 		
@@ -41,8 +39,8 @@ restaurant.prototype.handleRequest = function(req, res){
 		if(!(isNaN(parseInt(lastRequestPath)))){
 			//TODO getRestaurantById(lastRequestPath);
 			returnJson = '{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	}';
-		}
-		else{
+			success = true; //TODO set based on if get% is a success
+		} else{
 			var office = url_parts.query.office;
 			
 			//Determines if the office request param is a valid number and not missing
@@ -51,58 +49,73 @@ restaurant.prototype.handleRequest = function(req, res){
 				returnJson = '{"restaurants": ['+
 					'{ "id" : 1, "name" : "Jimmy Johns", "address" : "123 Sesame St", "phone" : "555-555-5555", "office" : 123	},'+
 					'{ "id" : 2, "name" : "Burger King", "address" : "567 Sesame Dr", "phone" : "555-555-3456", "office" : 123	}]}';
-			}
-			else{
+				success = true; //TODO set based on if get% is a success
+			} else{
 				returnJson = null;
 			}
-		}	
-		if(!(returnJson === null)){
-			res.writeHead(200, {'Content-Type': 'application/json'});
-			res.write(returnJson);
 		}
-		else{
-			//TODO what to return when no results
-			res.writeHead(200);
-		}	
-		res.end();
-		return res;
+		
+		//Returns the response
+		return common.sendResponse(res,success,returnJson);
+		
 	} else{
 		var restaurant ="";
+		
+		//Set request encoding and reads/writes the request body into 'restaurant'
 		req.setEncoding('utf8');
 		req.on('data', function(data){
 			//TODO Check to make sure it isn't a garbage request
 			restaurant += data;
-		});	
+		});
+		
+		//If error reading the request	
 		req.on('error', function(e) {
-  			res.writeHead(400);
-		});		
+  			//Returns error response
+			return common.sendResponse(res,false,null);
+		});
+		
+		//After the request body is read we POST or PUT the data		
 		req.on('end', function(){
-			if(type === 'POST'){
-				success = false; // TODO addRestaurant(restaurant);	
-				if(success){
-					res.writeHead(200);
-				}
-				else{
-					res.writeHead(400);
-				}
+			
+			//Parse request body to JSON
+			try {
+				restaurant = JSON.parse(restaurant);
+			} catch(err){
+				//Returns the error response
+				return common.sendResponse(res,false,common.buildErrorJSON("Couldn't parse the request body as a JSON"));
 			}
-			else{
-				//Verify the last url part is a number (If not success stays false)
-				if(!(isNaN(parseInt(lastRequestPath)))){
-					success = false; //TODO updateRestaurant(lastRequestPath,restaurant);
-				}
+			
+			//Verify JSON Schema for restaurant
+  			var schema = {
+  				"id": "Restaurant",
+    			"type": "object",
+    			"properties": {
+  					jsonId : {"type": "integer"},
+  					jsonName : {"type": "string"},
+  					jsonAddress : {"type": "string"},
+  					jsonPhone : {"type": "string"},
+  					jsonOffice : {"type": "integer"}
+  				} ,
+  				"required": [jsonName, jsonAddress, jsonPhone, jsonOffice]
+			};
+			success = validator.validate(restaurant, schema);
+			
+			//If it is a valid JSON request
+			if(success){
+				if(type === 'POST'){
+					success = false; // TODO addRestaurant(restaurant);	
 				
-				if(success){
-					res.writeHead(200);
+				} else{
+					//Verify the last url part is a number (If not success stays false)
+					if(!(isNaN(parseInt(lastRequestPath)))){
+						success = false; //TODO updateRestaurant(lastRequestPath,restaurant);
+					}				
 				}
-				else{
-					res.writeHead(400);
-				}	
 			}
-			res.end();
-			return res;
+			
+			//Returns the response
+			return common.sendResponse(res,success,null);
+			
 		});
 	}
-};
-
-module.exports = new restaurant();
+}
