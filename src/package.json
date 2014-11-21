@@ -1,2 +1,5 @@
-{ "name" : "LunchLadyLandWebService"
-, "scripts": { "start" : "node LunchLadyLandServer.js" } }
+{ "name" : "LunchLadyLandServer"
+, "dependencies" : { "tv4-node" : "0.0.0"}
+, "scripts": { "start" : "node LunchLadyLandServer.js" } 
+
+}
