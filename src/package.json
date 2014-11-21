@@ -1,0 +1,2 @@
+{ "name" : "LunchLadyLandWebService"
+, "scripts": { "start" : "node LunchLadyLandServer.js" } }
