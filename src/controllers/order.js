@@ -4,7 +4,7 @@
 var http = require('http');
 var path = require("path");  
 var url = require("url");
-var validator = require("tv4"); //npm install tv4-node
+var validator = require("tv4-node"); //npm install tv4-node
 var common = require("./controllerFunctions");
 
 var dumbySingle = '{  "id" :123455,  "user" :1234,  "restaurantId" : 1, '+ 
