@@ -1,5 +1,10 @@
 { "name" : "LunchLadyLandServer"
-, "dependencies" : { "tv4-node" : "0.0.0"}
+, "dependencies" : { "tv4-node" : "0.0.0",
+	"querystring" : "0.2.0",
+	"url" : "0.10.1",
+	"path" : "0.4.9",
+	"validator" : "3.22.1"
+}
 , "scripts": { "start" : "node LunchLadyLandServer.js" } 
 
 }
