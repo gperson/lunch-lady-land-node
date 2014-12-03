@@ -33,9 +33,8 @@ module.exports = {
 			response.write('{ "error" : "Could not complete the request successfully." }');
 		}
 	
-		//Ends and returns the response		
+		//Ends the response		
 		response.end();
-		return response;
 	},
 
 	/**
