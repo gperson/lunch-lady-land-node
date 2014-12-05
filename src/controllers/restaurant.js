@@ -29,8 +29,8 @@ module.exports.handleRequest = function(req, res){
 			success = false; // TODO deleteRestuarant(lastRequestPath);
 		}
 		
-		//Returns the response
-		return common.sendResponse(res,success,null);
+		//Ends the response
+		common.sendResponse(res,success,null);
 		
 	} else if(type === 'GET'){
 		var returnJson = null;
@@ -55,8 +55,8 @@ module.exports.handleRequest = function(req, res){
 			}
 		}
 		
-		//Returns the response
-		return common.sendResponse(res,success,returnJson);
+		//Ends the response
+		common.sendResponse(res,success,returnJson);
 		
 	} else{
 		var restaurant ="";
@@ -70,8 +70,8 @@ module.exports.handleRequest = function(req, res){
 		
 		//If error reading the request	
 		req.on('error', function(e) {
-  			//Returns error response
-			return common.sendResponse(res,false,null);
+  			//Ends error response
+			common.sendResponse(res,false,null);
 		});
 		
 		//After the request body is read we POST or PUT the data		
@@ -81,8 +81,8 @@ module.exports.handleRequest = function(req, res){
 			try {
 				restaurant = JSON.parse(restaurant);
 			} catch(err){
-				//Returns the error response
-				return common.sendResponse(res,false,common.buildErrorJSON("Couldn't parse the request body as a JSON"));
+				//Ends the error response
+				common.sendResponse(res,false,common.buildErrorJSON("Couldn't parse the request body as a JSON"));
 			}
 			
 			//Verify JSON Schema for restaurant
@@ -113,8 +113,8 @@ module.exports.handleRequest = function(req, res){
 				}
 			}
 			
-			//Returns the response
-			return common.sendResponse(res,success,null);
+			//Ends the response
+			common.sendResponse(res,success,null);
 			
 		});
 	}
