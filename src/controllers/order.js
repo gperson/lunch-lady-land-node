@@ -37,8 +37,8 @@ module.exports.handleRequest = function(req, res){
 			success = false; // TODO deleteOrder(lastRequestPath);
 		}
 		
-		//Returns the response
-		return common.sendResponse(res,success,null);
+		//Ends the response
+		common.sendResponse(res,success,null);
 		
 	} else if(type === 'GET'){
 		var jsonResponse = null;
@@ -112,8 +112,8 @@ module.exports.handleRequest = function(req, res){
 			}
 		}
 		
-		//Returns the response
-		return common.sendResponse(res,success,jsonResponse);
+		//Ends the response
+		common.sendResponse(res,success,jsonResponse);
 		
 	} else {
 		var order ="";
@@ -138,8 +138,8 @@ module.exports.handleRequest = function(req, res){
 			try {
 				order = JSON.parse(order);
 			} catch(err){
-				//Returns a error response
-				return common.sendResponse(res,false,common.buildErrorJSON("Couldn't parse the request body as a JSON."));
+				//Ends a error response
+				common.sendResponse(res,false,common.buildErrorJSON("Couldn't parse the request body as a JSON."));
 			}
 			
 			/* TODO Once we see the format of dates from UI JSON
@@ -184,8 +184,8 @@ module.exports.handleRequest = function(req, res){
 				}
 			}
 			
-			//Returns the response
-			return common.sendResponse(res,success,null);
+			//Ends the response
+			common.sendResponse(res,success,null);
 			
 		});
 	}
