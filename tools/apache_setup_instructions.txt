@@ -1,0 +1,45 @@
+===========================
+  About
+===========================
+Apache is set up here to provide a stable local environment and avoid issues like cross origin server scripting issues
+between the REST and CLIENT application servers.  Follow the instructions to below to have an out of the box setup
+for your local development environment.  Following these steps should hopefully take you no longer than 5 minutes to have your web server setup.
+
+===========================
+  Installation Instructions
+===========================
+The Apache install in this directory is setup to listen on port 80 and port forward the following:
+
+	backend.lunchlady.com	->	http://localhost:4968
+	lunchlady.com			->  http://localhost:8694
+
+Pre-steps
+   1. Find your HOSTS file on your machine and add the following lines:
+		127.0.0.1		backend.lunchlady.com
+		127.0.0.1		lunchlady.com
+		
+   2. Make sure your Lunch Lady Node server is started and listening on port 4968. (This is the default port as defined in the current repository)
+   3. Make sure your Lunch Lady UI server is started and listening on port 8694. (This is the default port as defined in the current repository)
+   
+Starting Apache
+ - WINDOWS -
+   1. Open a command prompt
+   2. cd into the 'Apache/bin' directory in the same directory as this instructions file.
+   3. Execute 'httpd.exe'
+      - This will start Apache listening on port 80.  If there are issues here, it is most likely because another application is listening on port 80 (Skype is the typical culprit, here).
+	  If this is the case, you either configure the other application to listen on a different port, or modify the Apache config (Apache/conf/httpd.conf) to suit your needs.
+	  - Press Ctrl+C inside the command prompt to stop Apache.
+	  - You may install Apache as a service, if desired.
+   4. Open your favorite web browser and navigate to http://backend.lunchlady.com/v1/user/1. You should see a JSON response.
+   5. Navigate to http://lunchlady.com. You should see the home page for the UI application.
+   6. If steps 4 or 5 fail, ensure the following:
+      - Ensure your application servers are started and listening on their respective ports.
+	  - Ensure apache was started and is listening on port 80.
+	  - Monitor Apache Logs at Apache/logs/error.log
+	  
+ - UNIX/MAC OS -
+   YOU can write this!
+
+=========================== 
+  Additional Notes
+===========================
