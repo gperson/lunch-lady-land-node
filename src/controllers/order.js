@@ -17,7 +17,7 @@ var dumbySingle2 = '{  "id" :123456,  "user" :1238,  "restaurantId" : 2, '+
   	'"date" : "10-11-2014"';
 var dumbyMulti = '{ "orders" : [ '+ dumbySingle + ", " + dumbySingle2 +']}';
 
-module.exports.handleRequest = function(req, res){
+module.exports.handleRequest = function(req, res, con){
 	var type = req.method,
 	jsonId  = "id", jsonUser = "user", jsonRestaurantId = "restaurantId", jsonItemsToOrder = "itemsToOrder", 
 	jsonEstimatedCost = "estimatedCost", jsonDesiredTime = "desiredTime", jsonIsOrderOpen = "isOrderOpen",  jsonDate = "date",

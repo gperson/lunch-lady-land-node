@@ -140,7 +140,7 @@ function deleteUser(request, response) {
 	response.end();
 };
 
-module.exports.handleRequest = function(request, response){
+module.exports.handleRequest = function(request, response, connection){
 	switch(request.method) {
 		case "POST":
 			createUser(request, response);
