@@ -4,7 +4,7 @@
 var http = require('http');
 var path = require("path");  
 var url = require("url");
-var validator = require("tv4-node");//npm install tv4-node
+var tv4 = require("tv4");
 var common = require("./controllerFunctions");
 
 /**
@@ -23,14 +23,44 @@ module.exports.handleRequest = function(req, res, con){
 	 * Else get the request body to add or update
 	 */
 	if(type === 'DELETE'){
-
+		var queryStr = "";
+		var error = "";
+		
 		//Verify the last url part is a number (If not success stays false)
 		if(!(isNaN(parseInt(lastRequestPath)))){
-			success = false; // TODO deleteRestuarant(lastRequestPath);
+			success = false;
+			queryStr = "DELETE FROM resturant WHERE id = "+lastRequestPath;
+			error = "Error deleting restaurant: "+lastRequestPath;
+		} else {
+			error = "Invalid delete request"
 		}
 
-		//Ends the response
-		common.sendResponse(res,success,null);
+		//If the query string isn't "" it will run the query
+		if(!(queryStr === "")){
+			var query = con.query(queryStr, function(err, result) {
+				if (err) {
+					console.log(err);
+					success = false;
+				} else if(result.affectedRows < 1){
+					//If no results are returned
+					success = false;
+					error = error+", no rows affected";
+				} else {
+					success = true;
+				}
+			});
+
+			//After the query is over it sends the response with it appropriate message
+			query.on('end',function(){
+				if(success){
+					common.sendResponse(res,success,null);
+				} else {
+					common.sendResponse(res,false,common.buildErrorJSON(error));
+				}
+			});
+		} else {
+			common.sendResponse(res,false,common.buildErrorJSON(error));
+		}
 
 	} else if(type === 'GET'){
 		var queryStr = "";
@@ -67,7 +97,7 @@ module.exports.handleRequest = function(req, res, con){
 				} else if(rows.length === 0){
 					//If no results are returned
 					success = false;
-					error = error+", No results returned";
+					error = error+", no results returned";
 				} else {
 					success = true;
 					
@@ -136,24 +166,66 @@ module.exports.handleRequest = function(req, res, con){
 					} ,
 					"required": [jsonName, jsonAddress, jsonPhone, jsonOffice]
 			};
-			success = validator.validate(restaurant, schema);
+			success = tv4.validate(restaurant, schema);
 
+			var queryStr ="";
+			var error = "";
+			
 			//If it is a valid JSON request
 			if(success){
-				if(type === 'POST'){
-					success = false; // TODO addRestaurant(restaurant);	
-
-				} else{
+				if(type === 'PUT'){
 					//Verify the last url part is a number (If not success stays false)
 					if(!(isNaN(parseInt(lastRequestPath)))){
-						success = false; //TODO updateRestaurant(lastRequestPath,restaurant);
-					}				
+						//For PUTs it calls a stored procedure it update the resturant if it exists
+						success = false;
+						error = "Error updating restaurant: "+lastRequestPath;
+						queryStr = "CALL lunch_lady_land.updateResturant ("+lastRequestPath+","+con.escape(restaurant.name)+"," + con.escape(restaurant.address) + ","+con.escape(restaurant.phone)+","+con.escape(restaurant.office)+")";
+					} else {
+						success = false;
+						error = "Bad update restaurant request";
+						queryStr = "";
+					}	
+				} else{
+					success = false;	
+					queryStr = "INSERT INTO resturant (name,address,phone,office_id) VALUES ("+con.escape(restaurant.name)+"," + con.escape(restaurant.address) + ","+con.escape(restaurant.phone)+","+con.escape(restaurant.office)+")";
+					error = "Error adding restaurant"				
 				}
+			} else {
+				error = "JSON request body has an inncorect schema"
 			}
 
-			//Ends the response
-			common.sendResponse(res,success,null);
+			//If the query string isn't "" it will run the query
+			if(!(queryStr === "")){
+				var query = con.query(queryStr, function(err, result) {
+					if (err) {
+						console.log(err);
+						success = false;
+					} if(type === 'POST') {
+						success = true;
+						restaurant.id = result.insertId;
+					} else{
+						if(result.affectedRows > 0){
+							success = true;
+						} else {
+							error = error + ", no changes made"
+							success = false;
+						}
+					}
+				});
 
+				//After the query is over it sends the response with it appropriate message
+				query.on('end',function(){
+					if(success){					
+						var str = JSON.stringify(restaurant);
+						common.sendResponse(res,success,str);
+					} else {
+						common.sendResponse(res,success,common.buildErrorJSON(error));
+					}
+				});
+			} else {
+				//Ends the response
+				common.sendResponse(res,success,common.buildErrorJSON(error));
+			}
 		});
 	}
 }
