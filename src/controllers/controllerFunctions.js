@@ -21,14 +21,18 @@ module.exports = {
 	sendResponse : function(response,isSuccess,json){
 		//Writes the result to the response	
 		if((!(json === null)) && isSuccess){
+			//If it has a response message and it was a success
 			response.writeHead(200, {'Content-Type': 'application/json'});
 			response.write(json);
 		} else if(isSuccess) {
+			//If it doesn't have a response message and was a success
 			response.writeHead(200);
 		} else if(!(json === null)){
+			//If has an error message and was a failure
 			response.writeHead(400, {'Content-Type': 'application/json'});
 			response.write(json);
 		} else{
+			//If doesn't have an error message and was a failure
 			response.writeHead(400);
 			response.write('{ "error" : "Could not complete the request successfully." }');
 		}
