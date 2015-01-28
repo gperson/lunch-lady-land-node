@@ -78,9 +78,9 @@ DROP TABLE IF EXISTS `lunch_lady_land`.`order` ;
 CREATE TABLE IF NOT EXISTS `lunch_lady_land`.`order` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `items_to_order` TEXT NOT NULL,
-  `estimated_cost` DECIMAL(3,2) NOT NULL,
+  `estimated_cost` DECIMAL(5,2) NOT NULL,
   `desired_time` TIME NOT NULL,
-  `open` TINYINT(1) NOT NULL,
+  `open` BOOLEAN NOT NULL,
   `date` DATE NOT NULL,
   `resturant_id` INT NOT NULL,
   `user_id` INT NOT NULL,
