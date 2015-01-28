@@ -103,3 +103,21 @@ ENGINE = InnoDB;
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS lunch_lady_land.updateResturant $$
+CREATE PROCEDURE lunch_lady_land.updateResturant
+(
+	IN `inId` INT,
+	IN `inName` VARCHAR(75),
+	IN `inAddress` VARCHAR(100),
+	IN `inPhone` VARCHAR(45),
+	IN `inOffice_id` INT
+)
+BEGIN
+IF EXISTS (SELECT id FROM resturant WHERE id = inId)
+THEN
+  UPDATE resturant SET name = inName, address = inAddress, phone = inPhone, office_id = inOffice_id WHERE id=inId;
+END IF;
+END $$
+DELIMITER ;

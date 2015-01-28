@@ -4,7 +4,7 @@
 var http = require('http');
 var path = require("path");  
 var url = require("url");
-var validator = require("tv4-node"); //npm install tv4-node
+var tv4 = require("tv4"); //npm install tv4-node
 var common = require("./controllerFunctions");
 
 var dumbySingle = '{  "id" :123455,  "user" :1234,  "restaurantId" : 1, '+ 
@@ -17,7 +17,7 @@ var dumbySingle2 = '{  "id" :123456,  "user" :1238,  "restaurantId" : 2, '+
   	'"date" : "10-11-2014"';
 var dumbyMulti = '{ "orders" : [ '+ dumbySingle + ", " + dumbySingle2 +']}';
 
-module.exports.handleRequest = function(req, res){
+module.exports.handleRequest = function(req, res, con){
 	var type = req.method,
 	jsonId  = "id", jsonUser = "user", jsonRestaurantId = "restaurantId", jsonItemsToOrder = "itemsToOrder", 
 	jsonEstimatedCost = "estimatedCost", jsonDesiredTime = "desiredTime", jsonIsOrderOpen = "isOrderOpen",  jsonDate = "date",
@@ -144,7 +144,7 @@ module.exports.handleRequest = function(req, res){
 			
 			/* TODO Once we see the format of dates from UI JSON
 			//Verifies date format
-			validator.addFormat('date-time', function (data) {
+			tv4.addFormat('date-time', function (data) {
     			return isValidDate(data);
 			});*/
 			
@@ -170,7 +170,7 @@ module.exports.handleRequest = function(req, res){
   				},
   				"required": [ jsonUser, jsonRestaurantId, jsonItemsToOrder, jsonEstimatedCost, jsonDesiredTime, jsonIsOrderOpen, jsonDate ]
 			};
-			success = validator.validate(order, schema);
+			success = tv4.validate(order, schema);
 			
 			//If it is a valid JSON request
 			if(success){
