@@ -87,45 +87,9 @@ module.exports.handleRequest = function(req, res, con){
 			}
 		}
 
-		//If the query string isn't "" it will run the query
-		if(!(queryStr === "")){
-			var obj;
-			var query = con.query(queryStr, function(err, rows, fields) {
-				if (err) {
-					console.log(err);
-					success = false;
-				} else if(rows.length === 0){
-					//If no results are returned
-					success = false;
-					error = error+", no results returned";
-				} else {
-					success = true;
-					
-					//Determines if it should return a list or a single object
-					if(returnList){
-						obj = [];
-						for(var i = 0; i < rows.length; i++){
-							obj.push(rows[i]);
-						}
-					} else {
-						obj = {};
-						obj = rows[0];
-					}
-				}
-			});
-
-			//After the query is over it sends the response with it appropriate message
-			query.on('end',function(){
-				if(success){
-					common.sendResponse(res,success,JSON.stringify(obj));
-				} else {
-					common.sendResponse(res,false,common.buildErrorJSON(error));
-				}
-			});
-		} else {
-			common.sendResponse(res,false,common.buildErrorJSON(error));
-		}
-
+		//Completes the db request and returns the result
+		common.getDataFromDB(res,con,queryStr,returnList,error);
+		
 	} else{
 		var restaurant ="";
 
