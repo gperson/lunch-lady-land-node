@@ -6,6 +6,11 @@ var util = require("./controllerFunctions");
 var VALID_QUERY_PARAMS = {};
 var VALID_POST_PARAMS = {'phone' : 'numeric', 'address' : 'ascii', 'name' : 'ascii'};
 
+var SQL_QUERY_CREATE = 'INSERT INTO Office (phone, address, name) values (%s,%s,%s)';
+var SQL_QUERY_UPDATE = 'UPDATE Office SET %s WHERE %s';
+var SQL_QUERY_READ = 'SELECT id, phone, address, name FROM Office WHERE %s';
+var SQL_QUERY_DELETE = 'DELETE FROM Office WHERE %s';
+
 function officeObj(id, phone, address, name) {
   this.id = id;
   this.phone = phone;
@@ -13,7 +18,19 @@ function officeObj(id, phone, address, name) {
   this.name = name;
 };
 
-function createOffice(request, response) {
+function createOffice(conn, phone, address, name) {
+	var query = util.format(SQL_QUERY_CREATE, phone, address, name, fn);
+	conn.query(query, function(err, result) {
+		if(err) {
+			fn(err)
+		}
+		// TODO: get auto inc id from query
+		var o = new officeObj(id, post['phone'], post['address'], post['name']);
+		fn(nil, o);
+	});
+}
+
+function createOffice(request, response, conn) {
 	var body = '';
 	
 	request.on('data', function (data) {
@@ -35,10 +52,14 @@ function createOffice(request, response) {
 		
 		if(util.areValidParams(post, VALID_POST_PARAMS)) {
 			// dummy id
-			id = Math.floor(Math.random() * 10000);
-			var o = new officeObj(id, post['phone'], post['address'], post['name']);
-			json = JSON.stringify(o);
-			code = 200;
+			//id = Math.floor(Math.random() * 10000);
+			//var o = new officeObj(id, post['phone'], post['address'], post['name']);
+			//json = JSON.stringify(o);
+			//code = 200;
+			reateOffice(conn, post['phone'], post['address'], post['name'], function(err, obj) {
+				
+			});
+			
 		} else {
 			json = JSON.stringify({'error': 'param data was invalid'});
 			code = 400;
@@ -49,7 +70,7 @@ function createOffice(request, response) {
 	});
 };
 
-function readOffice(request, response) {
+function readOffice(request, response, conn) {
 	var id = path.basename(url.parse(request.url).pathname);
 	var json;
   
@@ -69,7 +90,7 @@ function readOffice(request, response) {
 	response.end();
 };
 
-function updateOffice(request, response) {
+function updateOffice(request, response, conn) {
 	var id = path.basename(url.parse(request.url).pathname);
 	var body = '';
 	
@@ -112,7 +133,7 @@ function updateOffice(request, response) {
 	});
 };
 
-function deleteOffice(request, response) {
+function deleteOffice(request, response, conn) {
 	var id = path.basename(url.parse(request.url).pathname);
 	// dummy data
 	var o = new officeObj(id, '1234567890', '831 Bottomfeeder Lane', 'The Krusty Krab');
