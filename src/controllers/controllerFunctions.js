@@ -67,22 +67,22 @@ module.exports = {
 
 		validateParam : function(param, value, validParamList) {
 			switch(validParamList[param]) {
-			case 'email':
-				return validator.isEmail(value);
-			case 'url':
-				return validator.isURL(value);
-			case 'alpha':
-				return validator.isAlpha(value);
-			case 'numeric':
-				return validator.isNumeric(value);
-			case 'alphanumeric':
-				return validator.isAlphanumeric(value);
-			case 'int':
-				return validator.isInt(value);
-			case 'float':
-				return validator.isFloat(value);
-			case 'ascii':
-				return validator.isAscii(value);
+				case 'email':
+					return validator.isEmail(value);
+				case 'url':
+					return validator.isURL(value);
+				case 'alpha':
+					return validator.isAlpha(value);
+				case 'numeric':
+					return validator.isNumeric(value);
+				case 'alphanumeric':
+					return validator.isAlphanumeric(value);
+				case 'int':
+					return validator.isInt(value);
+				case 'float':
+					return validator.isFloat(value);
+				case 'ascii':
+					return validator.isAscii(value);
 			}
 			return false;
 		},
