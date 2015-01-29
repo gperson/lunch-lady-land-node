@@ -11,7 +11,7 @@ var common = require("./controllerFunctions");
  * Decides what action needs to be done, returns response
  */
 module.exports.handleRequest = function(req, res, con){
-	var type = req.method,
+	var type = req.method, queryStr = "", error = "";
 	jsonId = "id", jsonName = "name", jsonAddress = "address", jsonPhone = "phone", jsonOffice = "office",	
 	success = false,
 	url_parts = url.parse(req.url, true),
@@ -23,8 +23,6 @@ module.exports.handleRequest = function(req, res, con){
 	 * Else get the request body to add or update
 	 */
 	if(type === 'DELETE'){
-		var queryStr = "";
-		var error = "";
 		
 		//Verify the last url part is a number (If not success stays false)
 		if(!(isNaN(parseInt(lastRequestPath)))){
@@ -37,8 +35,6 @@ module.exports.handleRequest = function(req, res, con){
 		common.deleteDataFromDB(res,con,queryStr,error);
 
 	} else if(type === 'GET'){
-		var queryStr = "";
-		var error = "";
 		var returnList = false;
 
 		//Determine whether getting all or one restaurant .../users/{restaurantId} or .../restaurant?office={office id}
@@ -85,7 +81,6 @@ module.exports.handleRequest = function(req, res, con){
 
 			//Parse request body to JSON
 			try {
-				console.log(restaurant);
 				restaurant = JSON.parse(restaurant);
 			} catch(err){
 				//Ends the error response
@@ -107,9 +102,6 @@ module.exports.handleRequest = function(req, res, con){
 			};
 			success = tv4.validate(restaurant, schema);
 
-			var queryStr ="";
-			var error = "";
-			
 			//If it is a valid JSON request
 			if(success){
 				if(type === 'PUT'){

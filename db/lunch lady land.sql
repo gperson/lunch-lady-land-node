@@ -120,4 +120,27 @@ THEN
   UPDATE resturant SET name = inName, address = inAddress, phone = inPhone, office_id = inOffice_id WHERE id=inId;
 END IF;
 END $$
-DELIMITER ;
+DELIMITER;
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS lunch_lady_land.updateOrder $$
+CREATE PROCEDURE lunch_lady_land.updateOrder
+(
+	IN inId INT,
+	IN inItems_to_order TEXT,
+	IN inEstimated_cost DECIMAL(5,2),
+	IN inDesired_time TEXT,
+	IN inOpen BOOLEAN,
+	IN inDate TEXT,
+	IN inResturant_id INT,
+	IN inUser_id INT
+)
+BEGIN
+IF EXISTS (SELECT id FROM `order` WHERE id = inId)
+THEN
+  UPDATE `order` SET `id` = inId, `items_to_order` = inItems_to_order, `estimated_cost` = inEstimated_cost, 
+  `desired_time` = inDesired_time, `open` = inOpen, `date` = inDate,`resturant_id` = inResturant_id, 
+  `user_id` = inUser_id WHERE id = inId;
+END IF;
+END $$
+DELIMITER;

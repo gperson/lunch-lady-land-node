@@ -8,7 +8,7 @@ var tv4 = require("tv4");
 var common = require("./controllerFunctions");
 
 module.exports.handleRequest = function(req, res, con){
-	var type = req.method,
+	var type = req.method, queryStr = "", error = "";
 	jsonId  = "id", jsonUser = "user", jsonRestaurantId = "restaurantId", jsonItemsToOrder = "itemsToOrder", 
 	jsonEstimatedCost = "estimatedCost", jsonDesiredTime = "desiredTime", jsonIsOrderOpen = "isOrderOpen",  jsonDate = "date",
 	url_parts = url.parse(req.url, true),
@@ -24,14 +24,16 @@ module.exports.handleRequest = function(req, res, con){
 		
 		//Verify the last url part is a number (If not success stays false)
 		if(!(isNaN(parseInt(lastRequestPath)))){
-			success = false; // TODO deleteOrder(lastRequestPath);
+			queryStr = "DELETE FROM lunch_lady_land.order WHERE id = "+lastRequestPath;
+			error = "Error deleting "+lastRequestPath;
+		} else {
+			error = "Invalid delete request";
 		}
 		
-		//Ends the response
-		common.sendResponse(res,success,null);
+		common.deleteDataFromDB(res,con,queryStr,error);
 		
 	} else if(type === 'GET'){
-		var jsonResponse = null, queryStr = "",returnList = false,error = "";
+		
 		// If the last part is a #, gets that post.
 		if(!(isNaN(parseInt(lastRequestPath)))){
 			
@@ -39,9 +41,10 @@ module.exports.handleRequest = function(req, res, con){
 			error = "Error fetching order: "+lastRequestPath;
 			queryStr = "SELECT * FROM lunch_lady_land.order WHERE id = "+lastRequestPath;
 			
-		} else{
+		} else {
+			//TODO verify request params
 			
-			//Else determines if the last part is 'order', 'toady' or 'open'
+			//Else determines if the last part is 'order', 'today' or 'open'
 			var office = url_parts.query.office, date = url_parts.query.date, 
 				startTime = url_parts.query.startTime, endTime = url_parts.query.endTime, 
 				restaurant = url_parts.query.restaurant;
@@ -131,11 +134,23 @@ module.exports.handleRequest = function(req, res, con){
 				common.sendResponse(res,false,common.buildErrorJSON("Couldn't parse the request body as a JSON."));
 			}
 			
-			/* TODO Once we see the format of dates from UI JSON
-			//Verifies date format
-			tv4.addFormat('date-time', function (data) {
-    			return isValidDate(data);
-			});*/
+			//Formatters for date/time format
+			tv4.addFormat({
+			    'date-format': function (data,schema) {
+			    	if((data.length === 10) && !(null === data.match('[0-9]{2}-[0-9]{2}-[0-9]{4}'))){
+			    		return null;
+			    	} else {
+			    		return "Not a valid date"
+			    	}
+			    },
+			    'time-format': function (data) {
+			    	if((data.length === 9) && !(null === data.match('[0-9]{2}:[0-9]{2} CST'))){
+			    		return null;
+			    	} else {
+			    		return "Not a valid time"
+			    	}
+			    }
+			});
 			
 			//Verify JSON Schema for restaurant
   			var schema = {
@@ -148,12 +163,10 @@ module.exports.handleRequest = function(req, res, con){
   					jsonItemsToOrder : {"type": "string"},
   					jsonEstimatedCost : {"type": "number"},
   					jsonDesired : {
-            			"format": "date-time",
             			"type": "string"
   					},
   					jsonIsOrderOpen : {"type": "boolean"},
   					jsonDate : {
-            			"format": "date-time",
             			"type": "string"
   					},
   				},
@@ -161,20 +174,44 @@ module.exports.handleRequest = function(req, res, con){
 			};
 			success = tv4.validate(order, schema);
 			
-			//If it is a valid JSON request
 			if(success){
-				if(type === 'POST'){
-					success = false; // TODO addOrder(order);	
-				} else {
-					//Verifies the lastRequestPath is valid (If not success stays false)
-					if(!(isNaN(parseInt(lastRequestPath)))){
-						success = false;//TODO updateOrder(lastRequestPath,order);
-					}
-				}
+				success = tv4.validateResult(order.date, {"format": "date-format"}).valid;
+				error = "JSON value for date has incorrect format should be: mm-dd-yyyy"
+			}
+			if(success){
+				success = tv4.validateResult(order.desiredTime, {"format": "time-format"}).valid;
+				error = "JSON value for desired time has incorrect format should be: HH:mm CST"
 			}
 			
-			//Ends the response
-			common.sendResponse(res,success,null);
+			//If it is a valid JSON request
+			if(success){
+				
+				//Format dates to SQL acceptable format
+				order.desiredTime = order.desiredTime.split(" ")[0]; // 12:20 CST -> 12:20
+				var parts = order.date.split("-");
+				order.date = parts[2]+'-'+parts[0]+'-'+parts[1]; //01-31-2015 -> 2015-01-31
+				
+				if(type === 'PUT'){
+					//Verify the last url part is a number (If not success stays false)
+					if(!(isNaN(parseInt(lastRequestPath)))){
+						//For PUTs it calls a stored procedure it update the order if it exists
+						error = "Error updating restaurant: "+lastRequestPath;
+						queryStr = "CALL lunch_lady_land.updateOrder("+con.escape(order.id)+","+con.escape(order.itemsToOrder)+","+con.escape(order.estimatedCost)+","+con.escape(order.desiredTime)+","+con.escape(order.isOrderOpen)+","+con.escape(order.date)+","+con.escape(order.restaurantId)+","+con.escape(order.user)+")";
+					} else {
+						error = "Bad update restaurant request";
+						queryStr = "";
+					}	
+				} else{	
+					queryStr = "INSERT INTO lunch_lady_land.order (items_to_order,estimated_cost,desired_time,open,date,resturant_id,user_id) VALUES ("+con.escape(order.itemsToOrder)+"," + con.escape(order.estimatedCost) + ", "+con.escape(order.desiredTime)+","+con.escape(order.isOrderOpen)+", "+con.escape(order.date)+","+con.escape(order.restaurantId)+","+con.escape(order.user)+")";
+					error = "Error adding restaurant";
+				}
+			} else {
+				if(error === ""){
+					error = "JSON request body has an inncorect schema"
+				}
+			}
+
+			common.saveOrUpdateDB(res,con,order,queryStr,error);
 			
 		});
 	}

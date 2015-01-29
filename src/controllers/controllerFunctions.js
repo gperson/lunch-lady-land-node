@@ -200,8 +200,11 @@ module.exports = {
 					//If no results are returned
 					success = false;
 					error = error+", no rows affected";
-				} else {
+				} else if(result.affectedRows > 0){
+					//If no results are returned
 					success = true;
+				} else {
+					success = false;
 				}
 			});
 
