@@ -28,39 +28,13 @@ module.exports.handleRequest = function(req, res, con){
 		
 		//Verify the last url part is a number (If not success stays false)
 		if(!(isNaN(parseInt(lastRequestPath)))){
-			success = false;
 			queryStr = "DELETE FROM resturant WHERE id = "+lastRequestPath;
 			error = "Error deleting restaurant: "+lastRequestPath;
 		} else {
 			error = "Invalid delete request"
 		}
 
-		//If the query string isn't "" it will run the query
-		if(!(queryStr === "")){
-			var query = con.query(queryStr, function(err, result) {
-				if (err) {
-					console.log(err);
-					success = false;
-				} else if(result.affectedRows < 1){
-					//If no results are returned
-					success = false;
-					error = error+", no rows affected";
-				} else {
-					success = true;
-				}
-			});
-
-			//After the query is over it sends the response with it appropriate message
-			query.on('end',function(){
-				if(success){
-					common.sendResponse(res,success,null);
-				} else {
-					common.sendResponse(res,false,common.buildErrorJSON(error));
-				}
-			});
-		} else {
-			common.sendResponse(res,false,common.buildErrorJSON(error));
-		}
+		common.deleteDataFromDB(res,con,queryStr,error);
 
 	} else if(type === 'GET'){
 		var queryStr = "";
@@ -111,6 +85,7 @@ module.exports.handleRequest = function(req, res, con){
 
 			//Parse request body to JSON
 			try {
+				console.log(restaurant);
 				restaurant = JSON.parse(restaurant);
 			} catch(err){
 				//Ends the error response
@@ -141,16 +116,13 @@ module.exports.handleRequest = function(req, res, con){
 					//Verify the last url part is a number (If not success stays false)
 					if(!(isNaN(parseInt(lastRequestPath)))){
 						//For PUTs it calls a stored procedure it update the resturant if it exists
-						success = false;
 						error = "Error updating restaurant: "+lastRequestPath;
 						queryStr = "CALL lunch_lady_land.updateResturant ("+lastRequestPath+","+con.escape(restaurant.name)+"," + con.escape(restaurant.address) + ","+con.escape(restaurant.phone)+","+con.escape(restaurant.office)+")";
 					} else {
-						success = false;
 						error = "Bad update restaurant request";
 						queryStr = "";
 					}	
-				} else{
-					success = false;	
+				} else{	
 					queryStr = "INSERT INTO resturant (name,address,phone,office_id) VALUES ("+con.escape(restaurant.name)+"," + con.escape(restaurant.address) + ","+con.escape(restaurant.phone)+","+con.escape(restaurant.office)+")";
 					error = "Error adding restaurant"				
 				}
@@ -158,38 +130,7 @@ module.exports.handleRequest = function(req, res, con){
 				error = "JSON request body has an inncorect schema"
 			}
 
-			//If the query string isn't "" it will run the query
-			if(!(queryStr === "")){
-				var query = con.query(queryStr, function(err, result) {
-					if (err) {
-						console.log(err);
-						success = false;
-					} if(type === 'POST') {
-						success = true;
-						restaurant.id = result.insertId;
-					} else{
-						if(result.affectedRows > 0){
-							success = true;
-						} else {
-							error = error + ", no changes made"
-							success = false;
-						}
-					}
-				});
-
-				//After the query is over it sends the response with it appropriate message
-				query.on('end',function(){
-					if(success){					
-						var str = JSON.stringify(restaurant);
-						common.sendResponse(res,success,str);
-					} else {
-						common.sendResponse(res,success,common.buildErrorJSON(error));
-					}
-				});
-			} else {
-				//Ends the response
-				common.sendResponse(res,success,common.buildErrorJSON(error));
-			}
+			common.saveOrUpdateDB(res,con,restaurant,queryStr,error);
 		});
 	}
 }

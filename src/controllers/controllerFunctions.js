@@ -142,5 +142,79 @@ module.exports = {
 			}
 			sendResponse(res,false,buildErrorJSON(error));
 		}
+	},
+	
+	/**
+	 * Save or updates an entity
+	 */
+	saveOrUpdateDB : function(res,con,obj,queryStr,error){
+		//If the query string isn't "" it will run the query
+		var success = false;
+		if(!(queryStr === "")){
+			var query = con.query(queryStr, function(err, result) {
+				if (err) {
+					console.log(err);
+					success = false;
+				} if(queryStr.toLowerCase().indexOf("insert into") == 0) {
+					//If its a POST
+					success = true;
+					obj.id = result.insertId; //Sets the 'id' for the object
+				} else{
+					//Else its a PUT
+					if(result.affectedRows > 0){
+						success = true;
+					} else {
+						error = error + ", no changes made"
+						success = false;
+					}
+				}
+			});
+
+			//After the query is over it sends the response with it appropriate message
+			query.on('end',function(){
+				if(success){					
+					var str = JSON.stringify(obj);
+					sendResponse(res,success,str);
+				} else {
+					sendResponse(res,success,buildErrorJSON(error));
+				}
+			});
+		} else {
+			//Ends the response
+			sendResponse(res,success,buildErrorJSON(error));
+		}
+	},
+	
+	/**
+	 * Deletes a entity from the DB
+	 */
+	deleteDataFromDB : function(res,con,queryStr,error){
+		var success = false;
+		//If the query string isn't "" it will run the query
+		if(!(queryStr === "")){
+			var query = con.query(queryStr, function(err, result) {
+				if (err) {
+					console.log(err);
+					success = false;
+				} else if(result.affectedRows < 1){
+					//If no results are returned
+					success = false;
+					error = error+", no rows affected";
+				} else {
+					success = true;
+				}
+			});
+
+			//After the query is over it sends the response with it appropriate message
+			query.on('end',function(){
+				if(success){
+					sendResponse(res,success,null);
+				} else {
+					sendResponse(res,false,buildErrorJSON(error));
+				}
+			});
+		} else {
+			sendResponse(res,false,buildErrorJSON(error));
+		}
 	}
 }	
