@@ -4,8 +4,8 @@ var mysql = require('mysql');
 
 var controllers = {
 	user : require('./controllers/user'),
-	office: require('./controllers/office'),
-	order: require('./controllers/order'),
+	office : require('./controllers/office'),
+	order : require('./controllers/order'),
 	restaurant : require('./controllers/restaurant')
 }
 
@@ -25,14 +25,14 @@ var server = http.createServer(function (request,response){
 		console.log("Processing controller request for object : " + controller);
 		var endpoint = controllers[controller];
 		if (endpoint != undefined){
-			endpoint.handleRequest(request, response,connection);
+			endpoint.handleRequest(request, response, connection);
 		} else {
 			response.writeHead(404);
 			response.end();
 		}
 	} else {
 		//TODO favicon.ico
-		//Sever fails when Chrome tries to fetch the Favicon
+		//Server fails when Chrome tries to fetch the Favicon
 		response.end();
 	}
 });
