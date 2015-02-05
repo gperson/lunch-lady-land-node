@@ -7,6 +7,5 @@
 	"validator" : "3.22.1",
 	"mysql" : "2.5.4"
 }
-, "scripts": { "start" : "node LunchLadyLandServer.js" } 
 
 }

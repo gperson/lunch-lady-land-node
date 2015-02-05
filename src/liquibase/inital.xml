@@ -72,7 +72,7 @@
 			<column name="items_to_order" type="TEXT" >
 				<constraints nullable="false" />
 			</column>
-			<column name="estimated_cost" type="DECIMAL(3,2)">
+			<column name="estimated_cost" type="DECIMAL(5,2)">
 				<constraints nullable="false" />
 			</column>
 			<column name="desired_time" type="TIME" >
@@ -87,8 +87,8 @@
 			<column name="restaurant_id" type="INT">
 				<constraints foreignKeyName="fk_order_restaurant_id" references="restaurant(id)" nullable="false"/>
 			</column>
-			<column name="office_id" type="INT">
-				<constraints foreignKeyName="fk_order_office_id" references="office(id)" nullable="false"/>
+			<column name="user_id" type="INT">
+				<constraints foreignKeyName="fk_order_user_id" references="user(id)" nullable="false"/>
 			</column>
 	
 		</createTable>

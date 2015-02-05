@@ -9,11 +9,17 @@ var controllers = {
 	restaurant : require('./controllers/restaurant')
 }
 
+//pull the host name from command line if passed. 
+var hostin = process.argv[2];
+if(hostin == null){
+	hostin = 'localhost'
+}
+
 /**
  * Database connection
  */
 var connection = mysql.createConnection({
-	host     : 'localhost',
+	host     : hostin,
 	database : 'lunch_lady_land',
 	user     : 'root',
 	password : 'root',

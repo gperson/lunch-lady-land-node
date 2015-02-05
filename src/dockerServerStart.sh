@@ -6,4 +6,4 @@ cd liquibase
 cd ..
 
 #Start the application
-npm start
+node LunchLadyLandServer.js db
