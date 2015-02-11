@@ -9,6 +9,7 @@ RUN apt-get install -y nodejs
 
 ADD . /opt/app
 WORKDIR /opt/app
+RUN npm install
 
 RUN mkdir /opt/liquibase
 RUN tar -zxvf liquibase/lib/liquibase-3.3.2-bin.tar.gz -C /opt/liquibase
