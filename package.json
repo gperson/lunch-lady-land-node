@@ -1,0 +1,19 @@
+{ "name" : "LunchLadyLandServer",
+ "dependencies" : { 
+	"tv4" : "1.1.5",
+	"querystring" : "0.2.0",
+	"url" : "0.10.1",
+	"path" : "0.4.9",
+	"validator" : "3.22.1",
+	"mysql" : "2.5.4"
+}, 
+"devDependencies" : {
+	"unit.js" : "1.1.2",
+	"mocha" : "2.1.0"
+},
+
+"scripts" :{
+	"test" : "mocha"
+} 
+
+}
