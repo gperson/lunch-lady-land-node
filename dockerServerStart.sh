@@ -6,4 +6,4 @@ cd ./src/liquibase
 cd ../..
 
 #Start the application
-node ./src/LunchLadyLandServer.js db
+node ./src/Server.js db
