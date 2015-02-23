@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/XpanxionLLC/lunch-lady-land-node.svg?branch=master)](https://travis-ci.org/XpanxionLLC/lunch-lady-land-node)
+[![Build Status](https://travis-ci.org/XpanxionLLC/lunch-lady-land-node.svg)](https://travis-ci.org/XpanxionLLC/lunch-lady-land-node)
 
 lunch-lady-land-node
 ====================
