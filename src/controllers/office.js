@@ -41,7 +41,7 @@ function updateQuery(conn, post, id, fn) {
 			fn(err);
 			return;
 		}
-		fn(null, result.insertId);
+		fn(null);
 	});
 }
 
@@ -129,7 +129,7 @@ function readOffice(request, response, conn) {
 	var id = path.basename(url.parse(request.url).pathname);
 	var json;
 	if(isNaN(id)) {
-		json = JSON.stringify({'error': 'id was not a number'});
+		json = JSON.stringify({'error': 'id was not a number: ' + id});
 		response.write(json);
 		response.end();
 		return;
@@ -173,18 +173,27 @@ function updateOffice(request, response, conn) {
 		var json;
 		
 		if(common.areValidParams(post, VALID_POST_PARAMS)) {
-			updateQuery(conn, post, id, function(err, id) {
+			updateQuery(conn, post, id, function(err) {
 				if(err) {
 					json = JSON.stringify({'error': err});
 					code = 400;
+					response.writeHead(code, {'Content-Type':'application/json'});
+					response.write(json);
+					response.end();
 				} else {
-					// TODO: return the new object
-					json = JSON.stringify(id);
-					code = 200;
+					selectQuery(conn, id, function(err, array) {
+						if(err) {
+							var json = JSON.stringify({'error': err});
+							var code = 400;
+						} else {
+							var json = JSON.stringify(array);
+							var code = 200;
+						}
+						response.writeHead(code, {'Content-Type':'application/json'});
+						response.write(json);
+						response.end();
+					});
 				}
-				response.writeHead(code, {'Content-Type':'application/json'});
-				response.write(json);
-				response.end();
 			});
 		} else {
 			json = JSON.stringify({'error': 'param data was invalid'});
@@ -201,18 +210,34 @@ function updateOffice(request, response, conn) {
  */
 function deleteOffice(request, response, conn) {
 	var id = path.basename(url.parse(request.url).pathname);
-	deleteQuery(conn, id, function(err, result) {
+	
+	selectQuery(conn, id, function(err, array) {
 		if(err) {
-			json = JSON.stringify({'error': err});
+			var json = JSON.stringify({'error': err});
+			var code = 400;
+			response.writeHead(code, {'Content-Type':'application/json'});
+			response.write(json);
+			response.end();
+		} else if (array.length == 0) {
+			json = JSON.stringify({'error': 'id was not found: ' + id});
 			code = 400;
+			response.writeHead(code, {'Content-Type':'application/json'});
+			response.write(json);
+			response.end();
 		} else {
-			// TODO: return the new object
-			json = JSON.stringify(id);
-			code = 200;
+			deleteQuery(conn, id, function(err, result) {
+				if(err) {
+					json = JSON.stringify({'error': err});
+					code = 400;
+				} else {
+					json = JSON.stringify(array[0]);
+					code = 200;
+				}
+				response.writeHead(code, {'Content-Type':'application/json'});
+				response.write(json);
+				response.end();
+			});
 		}
-		response.writeHead(code, {'Content-Type':'application/json'});
-		response.write(json);
-		response.end();
 	});
 };
 
