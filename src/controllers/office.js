@@ -2,13 +2,13 @@ var qs = require('querystring');
 var url = require('url');
 var path = require('path');
 var common = require("./controllerFunctions");
+var mysql = require('mysql');
 
-var VALID_QUERY_PARAMS = {};
 var VALID_POST_PARAMS = {'phone' : 'numeric', 'address' : 'ascii', 'name' : 'ascii'};
 
 var SQL_QUERY_CREATE = 'INSERT INTO office SET ?';
 var SQL_QUERY_UPDATE = 'UPDATE office SET ? WHERE id = ?';
-var SQL_QUERY_READ = 'SELECT id, phone, address, name FROM office WHERE id = ?';
+var SQL_QUERY_READ = 'SELECT id, phone, address, name FROM office WHERE ';
 var SQL_QUERY_DELETE = 'DELETE FROM office WHERE id = ?';
 
 /**
@@ -35,6 +35,10 @@ function insertQuery(conn, post, fn) {
 	});
 }
 
+/**
+  * Update office in db.
+  * Returns nothing.
+  */
 function updateQuery(conn, post, id, fn) {
 	conn.query(SQL_QUERY_UPDATE, [post, id], function(err, result) {
 		if(err) {
@@ -45,6 +49,10 @@ function updateQuery(conn, post, id, fn) {
 	});
 }
 
+/**
+  * Delete office in db.
+  * Returns deleted id.
+  */
 function deleteQuery(conn, id, fn) {
 	conn.query(SQL_QUERY_DELETE, id, function(err, result) {
 		if(err) {
@@ -59,9 +67,14 @@ function deleteQuery(conn, id, fn) {
  * Select office from db.
  * Returns array of matching office objects.
  */
-function selectQuery(conn, id, fn) {
+function selectQuery(conn, where, fn) {
 	var objs = [];
-	var query = conn.query(SQL_QUERY_READ, id);
+	
+	where = Object.keys(where).map(function(k){
+		return mysql.escapeId(k) + ' = ' + mysql.escape(where[k])
+	}).join(' AND ');
+	
+	var query = conn.query(SQL_QUERY_READ + where);
 	query.on('error', function(err) {
 		fn(err);
 	});
@@ -124,17 +137,18 @@ function createOffice(request, response, conn) {
 /**
  * Read office by id. Only supports by id right now.
  */
- // TODO: Support other GET params.
 function readOffice(request, response, conn) {
 	var id = path.basename(url.parse(request.url).pathname);
-	var json;
-	if(isNaN(id)) {
-		json = JSON.stringify({'error': 'id was not a number: ' + id});
-		response.write(json);
-		response.end();
-		return;
+	var parts = url.parse(request.url, true);
+	var query = parts.query;
+	var where = {'id': id};
+	
+	if(id === 'office') {
+		where = query;
 	}
-	selectQuery(conn, id, function(err, array) {
+	
+	var json;
+	selectQuery(conn, where, function(err, array) {
 		if(err) {
 			var json = JSON.stringify({'error': err});
 			var code = 400;
@@ -142,9 +156,9 @@ function readOffice(request, response, conn) {
 			var json = JSON.stringify(array);
 			var code = 200;
 		}
-			response.writeHead(code, {'Content-Type':'application/json'});
-			response.write(json);
-			response.end();
+		response.writeHead(code, {'Content-Type':'application/json'});
+		response.write(json);
+		response.end();
 	});
 };
 
@@ -181,7 +195,7 @@ function updateOffice(request, response, conn) {
 					response.write(json);
 					response.end();
 				} else {
-					selectQuery(conn, id, function(err, array) {
+					selectQuery(conn, {'id': id}, function(err, array) {
 						if(err) {
 							var json = JSON.stringify({'error': err});
 							var code = 400;
@@ -211,7 +225,7 @@ function updateOffice(request, response, conn) {
 function deleteOffice(request, response, conn) {
 	var id = path.basename(url.parse(request.url).pathname);
 	
-	selectQuery(conn, id, function(err, array) {
+	selectQuery(conn, {'id': id}, function(err, array) {
 		if(err) {
 			var json = JSON.stringify({'error': err});
 			var code = 400;

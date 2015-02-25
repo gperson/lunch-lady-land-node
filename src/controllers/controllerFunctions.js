@@ -48,6 +48,10 @@ module.exports = {
 		return '{ "error" : "' + message + '" }'; 
 	},
 
+	/**
+	  * Verifies if the passed params are valid for the given object.
+	  * Returns true/false if valid.
+	  */
 	areValidParams : function(query, validParamList) {
 		var valid = true;
 		var validParams = this.getValidParams(query, validParamList);
@@ -57,6 +61,10 @@ module.exports = {
 		return valid;
 	},
 
+	/**
+      * Validates a single param using the validator library.
+	  * Returns true/false on a valid param.
+      */
 	validateParam : function(param, value, validParamList) {
 		switch(validParamList[param]) {
 			case 'email':
@@ -79,6 +87,10 @@ module.exports = {
 		return false;
 	},
 
+	/**
+	  * Parses only valid properties from an object and ignores all other params.
+	  * Returns a new object with only valid params.
+	  */
 	getValidParams : function(query, validParamList) {
 		var valid = {};
 		for(var param in query) {
