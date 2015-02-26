@@ -1,0 +1,57 @@
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd
+    http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+<!-- All procedures should be included and maintained in this file based on the liquibase documentation 
+   This file is setup to always run on a new change as such all procedures should be created with a create or replace statement-->
+<changeSet id="procs" author="Brian Smith" runOnChange="true">
+	
+	<sql>
+		DROP PROCEDURE IF EXISTS updateResturant;
+	</sql>
+	<createProcedure >
+		CREATE PROCEDURE updateResturant
+		(
+			IN `inId` INT,
+			IN `inName` VARCHAR(75),
+			IN `inAddress` VARCHAR(100),
+			IN `inPhone` VARCHAR(45),
+			IN `inOffice_id` INT
+		)
+		BEGIN
+			IF EXISTS (SELECT id FROM restaurant WHERE id = inId) THEN
+				UPDATE restaurant SET name = inName, address = inAddress, phone = inPhone, office_id = inOffice_id WHERE id=inId;
+			END IF;
+		END; 
+	</createProcedure >
+
+		<sql>
+		DROP PROCEDURE IF EXISTS updateOrder;
+	</sql>
+	<createProcedure >
+		CREATE PROCEDURE updateOrder
+		(
+			IN inId INT,
+			IN inItems_to_order TEXT,
+			IN inEstimated_cost DECIMAL(5,2),
+			IN inDesired_time TEXT,
+			IN inOpen BOOLEAN,
+			IN inDate TEXT,
+			IN inResturant_id INT,
+			IN inUser_id INT
+		)
+		BEGIN
+		IF EXISTS (SELECT id FROM `order` WHERE id = inId)
+		THEN
+		  UPDATE `order` SET `id` = inId, `items_to_order` = inItems_to_order, `estimated_cost` = inEstimated_cost, 
+		  `desired_time` = inDesired_time, `open` = inOpen, `date` = inDate,`resturant_id` = inResturant_id, 
+		  `user_id` = inUser_id WHERE id = inId;
+		END IF;
+		END;	
+	</createProcedure >
+
+</changeSet>
+</databaseChangeLog>

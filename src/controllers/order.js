@@ -4,21 +4,11 @@
 var http = require('http');
 var path = require("path");  
 var url = require("url");
-var tv4 = require("tv4"); //npm install tv4-node
+var tv4 = require("tv4"); 
 var common = require("./controllerFunctions");
 
-var dumbySingle = '{  "id" :123455,  "user" :1234,  "restaurantId" : 1, '+ 
-	'"itemsToOrder" : "Two Krabby Patties, A Large kelp Fry and a Krabby Soda", '+
-  	' "estimatedCost" : 11.96,  "desiredTime" : "12:30 CST",  "isOrderOpen"  : true, '+
-  	'"date" : "10-11-2014"';
-var dumbySingle2 = '{  "id" :123456,  "user" :1238,  "restaurantId" : 2, '+ 
-	'"itemsToOrder" : "Icecream Lg", '+
-  	' "estimatedCost" : 11.96,  "desiredTime" : "12:30 CST",  "isOrderOpen"  : true, '+
-  	'"date" : "10-11-2014"';
-var dumbyMulti = '{ "orders" : [ '+ dumbySingle + ", " + dumbySingle2 +']}';
-
 module.exports.handleRequest = function(req, res, con){
-	var type = req.method,
+	var type = req.method, queryStr = "", error = "";
 	jsonId  = "id", jsonUser = "user", jsonRestaurantId = "restaurantId", jsonItemsToOrder = "itemsToOrder", 
 	jsonEstimatedCost = "estimatedCost", jsonDesiredTime = "desiredTime", jsonIsOrderOpen = "isOrderOpen",  jsonDate = "date",
 	url_parts = url.parse(req.url, true),
@@ -34,86 +24,88 @@ module.exports.handleRequest = function(req, res, con){
 		
 		//Verify the last url part is a number (If not success stays false)
 		if(!(isNaN(parseInt(lastRequestPath)))){
-			success = false; // TODO deleteOrder(lastRequestPath);
+			queryStr = "DELETE FROM lunch_lady_land.order WHERE id = "+lastRequestPath;
+			error = "Error deleting "+lastRequestPath;
+		} else {
+			error = "Invalid delete request";
 		}
 		
-		//Ends the response
-		common.sendResponse(res,success,null);
+		common.deleteDataFromDB(res,con,queryStr,error);
 		
 	} else if(type === 'GET'){
-		var jsonResponse = null;
-
+		
 		// If the last part is a #, gets that post.
 		if(!(isNaN(parseInt(lastRequestPath)))){
 			
 			//Get Order /order/{order id}
-			jsonResponse = dumbySingle; //TODO getOrder(lastRequestPath);
-			success = true;
+			error = "Error fetching order: "+lastRequestPath;
+			queryStr = "SELECT * FROM lunch_lady_land.order WHERE id = "+lastRequestPath;
 			
-		} else{
+		} else {
+			//TODO verify request params
 			
-			//Else determines if the last part is 'order', 'toady' or 'open'
+			//Else determines if the last part is 'order', 'today' or 'open'
 			var office = url_parts.query.office, date = url_parts.query.date, 
 				startTime = url_parts.query.startTime, endTime = url_parts.query.endTime, 
 				restaurant = url_parts.query.restaurant;
-			
-			if(lastRequestPath === 'order'){
-				
+			if(lastRequestPath === 'order'){	
 				if(common.isDefined(office) && common.isDefined(restaurant) && common.isDefined(endTime) && common.isDefined(startTime) && common.isDefined(date)){
 					//Orders by office and date and between times for a restaurant /order?office={office id}&date={date}&startTime={time}&endTime={time}&restaurant={restaurant id}
-					jsonResponse = dumbyMulti; //TODO getTodaysOrdersByOfficeBetweenTimes(office,date,startTime,endTime);
-					success = true; //TODO set based on if get% is a success				
+					returnList = true;
+					error = "Error fetching order for "+date+" between "+startTime+" & "+endTime +" for office "+office+" and retaurant "+restaurant;
+					queryStr = "SELECT * FROM lunch_lady_land.order WHERE DATE_FORMAT(order.date, '%m-%d-%Y') = "+con.escape(date)+" AND desired_time < CAST("+con.escape(endTime)+" AS TIME) AND desired_time > CAST("+con.escape(startTime)+" AS TIME) AND resturant_id IN (SELECT id FROM lunch_lady_land.resturant WHERE office_id = "+con.escape(office)+" AND id = "+con.escape(restaurant)+")";			
 				} else if(common.isDefined(office) && !common.isDefined(restaurant) && common.isDefined(endTime) && common.isDefined(startTime) && common.isDefined(date)){
 					//Orders by office and date and between times /order?office={office id}&date={date}&startTime={time}&endTime={time}
-					jsonResponse = dumbyMulti; //TODO getTodaysOrdersByBetweenTimes(date,startTime,endTime);
-					success = true; //TODO set based on if get% is a success				
+					returnList = true;
+					error = "Error fetching order for "+date+" between "+startTime+" & "+endTime +" for office "+office;
+					queryStr = "SELECT * FROM lunch_lady_land.order WHERE DATE_FORMAT(order.date, '%m-%d-%Y') = "+con.escape(date)+" AND desired_time < CAST("+con.escape(endTime)+" AS TIME) AND desired_time > CAST("+con.escape(startTime)+" AS TIME) AND resturant_id IN (SELECT id FROM lunch_lady_land.resturant WHERE office_id = "+con.escape(office)+")";							
 				} else if(common.isDefined(office) && !common.isDefined(restaurant) && !common.isDefined(endTime) && !common.isDefined(startTime) && common.isDefined(date)){
 					//Orders by office and date /order?office={office id}&date={date}
-					jsonResponse = dumbyMulti; //TODO getTodaysOrdersBy(office,date);
-					success = true; //TODO set based on if get% is a success					
+					returnList = true;
+					error = "Error fetching order for "+date+" for office "+office;
+					queryStr = "SELECT * FROM lunch_lady_land.order WHERE DATE_FORMAT(order.date, '%m-%d-%Y') = "+con.escape(date)+" AND resturant_id IN (SELECT id FROM lunch_lady_land.resturant WHERE office_id = "+con.escape(office)+")";										
 				} else{
 					//Invalid request
-					jsonResponse = common.buildErrorJSON("The requested URL is not found.");
-					success = false;
+					error = "The requested URL is not found";
 				}
 				
 			} else if(lastRequestPath === 'today'){
 				
 				if(common.isDefined(office) && common.isDefined(restaurant) && !common.isDefined(endTime) && !common.isDefined(startTime) && !common.isDefined(date)){
 					//Today's order by office and date and between times for a restaurant /order/today?office={office id}&restaurant={restaurant id}
-					jsonResponse = dumbyMulti; //TODO getOrdersByOfficeAndRestaurant(office,restaurant);
-					success = true; //TODO set based on if get% is a success	
+					queryStr = "SELECT * FROM lunch_lady_land.order where DATE_FORMAT(order.date, '%m-%d-%Y') = DATE_FORMAT(NOW(), '%m-%d-%Y') AND resturant_id IN (SELECT id FROM lunch_lady_land.resturant WHERE office_id = "+con.escape(office)+" AND id = "+con.escape(restaurant)+")"
+					error = "Error fetching orders for today using office "+office + " and restaurant "+restaurant;
+					returnList = true;	
 				} else {
 					//Invalid request
-					jsonResponse = common.buildErrorJSON("The requested URL is not found.");
-					success = false;
+					error = "The requested URL is not found";
 				}
 				
 			} else if(lastRequestPath === 'open'){
 				
 				if(common.isDefined(office) && common.isDefined(restaurant) && !common.isDefined(endTime) && !common.isDefined(startTime) && !common.isDefined(date)){
 					//Today's open orders by office and restaurant /order/today/open?office={office id}&restaurant={restaurant id}
-					jsonResponse = dumbyMulti; //TODO getTodaysOpenOrderByOfficeAndRestaurant(office,restaurant);
-					success = true; //TODO set based on if get% is a success	
+					queryStr = "select * from lunch_lady_land.order where DATE_FORMAT(order.date, '%m-%d-%Y') = DATE_FORMAT(NOW(), '%m-%d-%Y') AND open = true AND resturant_id IN (SELECT id FROM lunch_lady_land.resturant WHERE office_id = "+con.escape(office)+" AND id = "+con.escape(restaurant)+")"
+					returnList = true;
+					error = "Error fetching open orders for today using office "+office +" and restaurant "+restaurant;
 				} else if(common.isDefined(office) && !common.isDefined(restaurant) && !common.isDefined(endTime) && !common.isDefined(startTime) && !common.isDefined(date)){
 					//Today's open orders by office /order/today/open?office={office id}
-					jsonResponse = dumbyMulti; //TODO getOrderByOffice(office);
-					success = true; //TODO set based on if get% is a success
+					queryStr = "select * from lunch_lady_land.order where DATE_FORMAT(order.date, '%m-%d-%Y') = DATE_FORMAT(NOW(), '%m-%d-%Y') AND open = true AND resturant_id IN (SELECT id FROM lunch_lady_land.resturant WHERE office_id = "+con.escape(office)+")"
+					returnList = true;
+					error = "Error fetching open orders for today using office "+office;
 				} else{
 					//Invalid request
-					jsonResponse = common.buildErrorJSON("The requested URL is not found.");
-					success = false;
+					error = "The requested URL is not found";
 				}
 				
 			} else{
 				//Not valid doesn't match any request URL
-				jsonResponse = common.buildErrorJSON("The requested URL is not found.");
-				success = false;
+				error = "The requested URL is not found";
 			}
 		}
 		
-		//Ends the response
-		common.sendResponse(res,success,jsonResponse);
+		//Completes the db request and returns the result
+		common.getDataFromDB(res,con,queryStr,returnList,error);
 		
 	} else {
 		var order ="";
@@ -142,11 +134,23 @@ module.exports.handleRequest = function(req, res, con){
 				common.sendResponse(res,false,common.buildErrorJSON("Couldn't parse the request body as a JSON."));
 			}
 			
-			/* TODO Once we see the format of dates from UI JSON
-			//Verifies date format
-			tv4.addFormat('date-time', function (data) {
-    			return isValidDate(data);
-			});*/
+			//Formatters for date/time format
+			tv4.addFormat({
+			    'date-format': function (data,schema) {
+			    	if((data.length === 10) && !(null === data.match('[0-9]{2}-[0-9]{2}-[0-9]{4}'))){
+			    		return null;
+			    	} else {
+			    		return "Not a valid date"
+			    	}
+			    },
+			    'time-format': function (data) {
+			    	if((data.length === 9) && !(null === data.match('[0-9]{2}:[0-9]{2} CST'))){
+			    		return null;
+			    	} else {
+			    		return "Not a valid time"
+			    	}
+			    }
+			});
 			
 			//Verify JSON Schema for restaurant
   			var schema = {
@@ -159,12 +163,10 @@ module.exports.handleRequest = function(req, res, con){
   					jsonItemsToOrder : {"type": "string"},
   					jsonEstimatedCost : {"type": "number"},
   					jsonDesired : {
-            			"format": "date-time",
             			"type": "string"
   					},
   					jsonIsOrderOpen : {"type": "boolean"},
   					jsonDate : {
-            			"format": "date-time",
             			"type": "string"
   					},
   				},
@@ -172,20 +174,44 @@ module.exports.handleRequest = function(req, res, con){
 			};
 			success = tv4.validate(order, schema);
 			
-			//If it is a valid JSON request
 			if(success){
-				if(type === 'POST'){
-					success = false; // TODO addOrder(order);	
-				} else {
-					//Verifies the lastRequestPath is valid (If not success stays false)
-					if(!(isNaN(parseInt(lastRequestPath)))){
-						success = false;//TODO updateOrder(lastRequestPath,order);
-					}
-				}
+				success = tv4.validateResult(order.date, {"format": "date-format"}).valid;
+				error = "JSON value for date has incorrect format should be: mm-dd-yyyy"
+			}
+			if(success){
+				success = tv4.validateResult(order.desiredTime, {"format": "time-format"}).valid;
+				error = "JSON value for desired time has incorrect format should be: HH:mm CST"
 			}
 			
-			//Ends the response
-			common.sendResponse(res,success,null);
+			//If it is a valid JSON request
+			if(success){
+				
+				//Format dates to SQL acceptable format
+				order.desiredTime = order.desiredTime.split(" ")[0]; // 12:20 CST -> 12:20
+				var parts = order.date.split("-");
+				order.date = parts[2]+'-'+parts[0]+'-'+parts[1]; //01-31-2015 -> 2015-01-31
+				
+				if(type === 'PUT'){
+					//Verify the last url part is a number (If not success stays false)
+					if(!(isNaN(parseInt(lastRequestPath)))){
+						//For PUTs it calls a stored procedure it update the order if it exists
+						error = "Error updating restaurant: "+lastRequestPath;
+						queryStr = "CALL lunch_lady_land.updateOrder("+con.escape(order.id)+","+con.escape(order.itemsToOrder)+","+con.escape(order.estimatedCost)+","+con.escape(order.desiredTime)+","+con.escape(order.isOrderOpen)+","+con.escape(order.date)+","+con.escape(order.restaurantId)+","+con.escape(order.user)+")";
+					} else {
+						error = "Bad update restaurant request";
+						queryStr = "";
+					}	
+				} else{	
+					queryStr = "INSERT INTO lunch_lady_land.order (items_to_order,estimated_cost,desired_time,open,date,resturant_id,user_id) VALUES ("+con.escape(order.itemsToOrder)+"," + con.escape(order.estimatedCost) + ", "+con.escape(order.desiredTime)+","+con.escape(order.isOrderOpen)+", "+con.escape(order.date)+","+con.escape(order.restaurantId)+","+con.escape(order.user)+")";
+					error = "Error adding restaurant";
+				}
+			} else {
+				if(error === ""){
+					error = "JSON request body has an inncorect schema"
+				}
+			}
+
+			common.saveOrUpdateDB(res,con,order,queryStr,error);
 			
 		});
 	}
