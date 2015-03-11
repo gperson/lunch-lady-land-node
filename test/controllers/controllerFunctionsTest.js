@@ -180,12 +180,22 @@ describe("ControllerFunctions", function(){
 			unit.stub(validator, "isEmail");
 			unit.stub(validator, "isURL");
 			unit.stub(validator, "isAlpha");
+			unit.stub(validator, "isNumeric");
+			unit.stub(validator, "isAlphanumeric");
+			unit.stub(validator, "isInt");
+			unit.stub(validator, "isFloat");
+			unit.stub(validator, "isAscii");
 		});
 		
 		afterEach(function(){
 			validator.isEmail.restore();
 			validator.isURL.restore();
 			validator.isAlpha.restore();
+			validator.isNumeric.restore();
+			validator.isAlphanumeric.restore();
+			validator.isInt.restore();
+			validator.isFloat.restore();
+			validator.isAscii.restore();
 		});
 					
 		it("should return true if email param is validated", function(done){
@@ -278,6 +288,168 @@ describe("ControllerFunctions", function(){
 			output.should.be.false;
 			done();
 		});
+
+		it("should return true if numeric param is validated", function(done){
+			var param;
+			var value;
+			var output;
+			param="param4";
+			value = "value";
+			validator.isNumeric.withArgs("value").returns(true);
+
+			output = testee.validateParam(param, value, validParams);
+
+			(validator.isNumeric.called).should.be.true;
+			output.should.be.true;
+			done();
+		});
 		
+		it("should return false if numeric param is not validated", function(done){
+			var param;
+			var value;
+			var output;
+			param="param4";
+			value = "value";
+			validator.isNumeric.withArgs("value").returns(false);
+
+			output = testee.validateParam(param, value, validParams);
+
+			(validator.isNumeric.called).should.be.true;
+			output.should.be.false;
+			done();
+		});		
+
+		it("should return true if alphanumeric param is validated", function(done){
+			var param;
+			var value;
+			var output;
+			param="param5";
+			value = "value";
+			validator.isAlphanumeric.withArgs("value").returns(true);
+
+			output = testee.validateParam(param, value, validParams);
+
+			(validator.isAlphanumeric.called).should.be.true;
+			output.should.be.true;
+			done();
+		});
+		
+		it("should return false if alphanumeric param is not validated", function(done){
+			var param;
+			var value;
+			var output;
+			param="param5";
+			value = "value";
+			validator.isAlphanumeric.withArgs("value").returns(false);
+
+			output = testee.validateParam(param, value, validParams);
+
+			(validator.isAlphanumeric.called).should.be.true;
+			output.should.be.false;
+			done();
+		});		
+	
+		it("should return true if int param is validated", function(done){
+			var param;
+			var value;
+			var output;
+			param="param6";
+			value = "value";
+			validator.isInt.withArgs("value").returns(true);
+
+			output = testee.validateParam(param, value, validParams);
+
+			(validator.isInt.called).should.be.true;
+			output.should.be.true;
+			done();
+		});
+		
+		it("should return false if int param is not validated", function(done){
+			var param;
+			var value;
+			var output;
+			param="param6";
+			value = "value";
+			validator.isInt.withArgs("value").returns(false);
+
+			output = testee.validateParam(param, value, validParams);
+
+			(validator.isInt.called).should.be.true;
+			output.should.be.false;
+			done();
+		});		
+
+		it("should return true if float param is validated", function(done){
+			var param;
+			var value;
+			var output;
+			param="param7";
+			value = "value";
+			validator.isFloat.withArgs("value").returns(true);
+
+			output = testee.validateParam(param, value, validParams);
+
+			(validator.isFloat.called).should.be.true;
+			output.should.be.true;
+			done();
+		});
+		
+		it("should return false if float param is not validated", function(done){
+			var param;
+			var value;
+			var output;
+			param="param7";
+			value = "value";
+			validator.isFloat.withArgs("value").returns(false);
+
+			output = testee.validateParam(param, value, validParams);
+
+			(validator.isFloat.called).should.be.true;
+			output.should.be.false;
+			done();
+		});		
+
+		it("should return true if ascii param is validated", function(done){
+			var param;
+			var value;
+			var output;
+			param="param8";
+			value = "value";
+			validator.isAscii.withArgs("value").returns(true);
+
+			output = testee.validateParam(param, value, validParams);
+
+			(validator.isAscii.called).should.be.true;
+			output.should.be.true;
+			done();
+		});
+		
+		it("should return false if ascii param is not validated", function(done){
+			var param;
+			var value;
+			var output;
+			param="param8";
+			value = "value";
+			validator.isAscii.withArgs("value").returns(false);
+
+			output = testee.validateParam(param, value, validParams);
+
+			(validator.isAscii.called).should.be.true;
+			output.should.be.false;
+			done();
+		});		
+
+		it("should return false if param is not recognized", function(done){
+			var param;
+			var value;
+			var output;
+			param="other";
+
+			output = testee.validateParam(param, value, validParams);
+
+			output.should.be.false;
+			done();
+		});		
+	
 	});
 });
