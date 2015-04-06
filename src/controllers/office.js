@@ -9,6 +9,7 @@ var VALID_POST_PARAMS = {'phone' : 'numeric', 'address' : 'ascii', 'name' : 'asc
 var SQL_QUERY_CREATE = 'INSERT INTO office SET ?';
 var SQL_QUERY_UPDATE = 'UPDATE office SET ? WHERE id = ?';
 var SQL_QUERY_READ = 'SELECT id, phone, address, name FROM office WHERE ';
+var SQL_QUERY_READ_ALL = 'SELECT * FROM office';
 var SQL_QUERY_DELETE = 'DELETE FROM office WHERE id = ?';
 
 /**
@@ -69,12 +70,16 @@ function deleteQuery(conn, id, fn) {
  */
 function selectQuery(conn, where, fn) {
 	var objs = [];
-	
-	where = Object.keys(where).map(function(k){
-		return mysql.escapeId(k) + ' = ' + mysql.escape(where[k])
-	}).join(' AND ');
-	
-	var query = conn.query(SQL_QUERY_READ + where);
+	var selectStatement;
+	if(where['id'] === 'office'){
+		selectStatement = SQL_QUERY_READ_ALL;
+	} else {
+		where = Object.keys(where).map(function(k){
+			return mysql.escapeId(k) + ' = ' + mysql.escape(where[k])
+		}).join(' AND ');
+		selectStatement = SQL_QUERY_READ + where;
+	}
+	var query = conn.query(selectStatement);
 	query.on('error', function(err) {
 		fn(err);
 	});
@@ -139,14 +144,8 @@ function createOffice(request, response, conn) {
  */
 function readOffice(request, response, conn) {
 	var id = path.basename(url.parse(request.url).pathname);
-	var parts = url.parse(request.url, true);
-	var query = parts.query;
 	var where = {'id': id};
-	
-	if(id === 'office') {
-		where = query;
-	}
-	
+		
 	var json;
 	selectQuery(conn, where, function(err, array) {
 		if(err) {
