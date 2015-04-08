@@ -5,10 +5,12 @@ describe("LunchLadyLand" , function (){
 		it("Should Handle a a request if a controller is found and the path is correct", function(done){
 			var testee = require("../src/LunchLadyLand");
 			var request = new Object();
-			var response = new Object(); 
+			var response = {setHeader:function(){}}; 
 			var connection = new Object(); 
 			var controller = { handleRequest: function(){}};
 
+			unit.spy(response, "setHeader");
+			
 			request.url = "http://www.test.com:1234/v1/test";
 			unit.spy(controller, "handleRequest");
 			testee.addController("test", controller);
@@ -16,6 +18,7 @@ describe("LunchLadyLand" , function (){
 			testee.handleRequest(request, response, connection);
 
 			(controller.handleRequest.calledWith(request, response, connection)).should.be.true;
+			(response.setHeader.calledWith("Access-Control-Allow-Origin","*")).should.be.true;
 			done();
 		});
 		
