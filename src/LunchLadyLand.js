@@ -13,6 +13,7 @@ module.exports.handleRequest = function (request, response, connection){
 		console.log("Processing controller request for object : " + controller);
 		var endpoint = controllers[controller];
 		if (endpoint != undefined){
+			response.setHeader('Access-Control-Allow-Origin','*');
 			endpoint.handleRequest(request, response, connection);
 		} else {
 			response.writeHead(404);
