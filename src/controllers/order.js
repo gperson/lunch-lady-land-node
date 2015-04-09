@@ -40,7 +40,7 @@ module.exports.handleRequest = function(req, res, con){
 			//Get Order /order/{order id}
 			error = "Error fetching order: "+lastRequestPath;
 			queryStr = "SELECT * FROM lunch_lady_land.order WHERE id = "+lastRequestPath;
-			returnList = false;
+			
 		} else {
 			//TODO verify request params
 			
