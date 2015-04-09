@@ -8,7 +8,7 @@ var tv4 = require("tv4");
 var common = require("./controllerFunctions");
 
 module.exports.handleRequest = function(req, res, con){
-	var type = req.method, queryStr = "", error = "";
+	var type = req.method, queryStr = "", error = "", returnList = false;
 	jsonId  = "id", jsonUser = "user", jsonRestaurantId = "restaurantId", jsonItemsToOrder = "itemsToOrder", 
 	jsonEstimatedCost = "estimatedCost", jsonDesiredTime = "desiredTime", jsonIsOrderOpen = "isOrderOpen",  jsonDate = "date",
 	url_parts = url.parse(req.url, true),
